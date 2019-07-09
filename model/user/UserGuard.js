@@ -152,6 +152,10 @@ UserGuard.getToken = function(data, callback) {
   User.getToken(data, callback);
 }
 
+UserGuard.verifyToken = function(token, callback) {
+  User.verifyToken(token, callback);
+}
+
 UserGuard.setInvalidCode = function(code) {
   UserGuard.invalidCode = code;
 }
@@ -177,4 +181,5 @@ module.exports = {
   isLoginValid: UserGuard.isLoginValid,
   login: UserGuard.login,
   getToken: UserGuard.getToken,
+  verifyToken: UserGuard.verifyToken,
 }

@@ -1,6 +1,6 @@
 "use strict";
 
-let app = '/root/test/myapp';
+let app = '/root/test/jujubeServer';
 
 let MyConf = {}
 

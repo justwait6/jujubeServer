@@ -2,13 +2,12 @@ var express = require('express');
 var router = express.Router();
 
 var myConf = require('../config/MyConf');
-
-var user = require('../model/user/User')
+var userGuard = require(myConf.paths.model + '/user/UserGuard');
 
 /* POST users listing. */
 router.post('/', function(req, res, next) {
   // console.log(req)
-  user.verifyToken(req.body.token, (isOk, uid) => {
+  userGuard.verifyToken(req.body.token, (isOk, uid) => {
     if (isOk) {
       console.log(uid);
       res.status(200).send("hello users");
