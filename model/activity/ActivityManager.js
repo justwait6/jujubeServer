@@ -3,12 +3,20 @@ const ActSwitch = require("./ActSwitch");
 let ActivityManager = {
   getSwitchs: function() {
     let switches = new Array();
-    ActSwitch.forEach((isActOpen, actDefIndex) => {
+    ActSwitch.forEach((isActOpen, actId) => {
       if (isActOpen) {
-        switches.push(actDefIndex);
+        switches.push(actId);
       }
     });
     return switches;
+  },
+
+  checkSwitch: function(targetActId) {
+    return ActSwitch.some((isActOpen, actId) => {
+      if (actId == targetActId) {
+        return isActOpen;
+      }
+    });
   }
 }
 

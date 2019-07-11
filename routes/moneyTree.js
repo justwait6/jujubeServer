@@ -6,30 +6,31 @@ var myUtil = require(myConf.requires.myUtil);
 var myDev = require(myConf.requires.myDev);
 myDev.setModuleName('router/login');
 
-var userGuard = require(myConf.paths.model + '/user/UserGuard');
+const ActDef = require(myConf.paths.model + '/activity/ActDef');
 var actMgr = require(myConf.paths.model + '/activity/ActivityManager');
+
+router.post('*', function(req, res, next) {
+  var isOpen = actMgr.checkSwitch(ActDef.MONEY_TREE);
+  if (isOpen) {
+    next();
+  } else {
+    res.json(myUtil.retObj({}, -100, "money tree remote switch not open!")).send();
+  }
+});
 
 /* POST MoneyTree basic info. */
 router.post('/basicInfo', function(req, res, next) {
-  // check if login info valid
-  userGuard.verifyToken(req.body.token, (isOk, uid) => {
-    if (isOk) {
-      console.log("uid: " + uid);
-    } else {
-      console.log("token verify fail");
-    }
-  });
+  
 });
 
 /* POST MoenyTree own tree info */
 router.post('/ownTreeInfo', function(req, res, next) {
-  userGuard.verifyToken(req.body.token, (isOk, uid) => {
-    if (isOk) {
-      console.log("uid: " + uid);
-    } else {
-      console.log("token verify fail");
-    }
-  });
+  
+});
+
+/* POST MoenyTree own tree info */
+router.post('/inviteCodeInfo', function(req, res, next) {
+  
 });
 
 

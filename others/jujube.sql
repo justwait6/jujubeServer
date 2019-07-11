@@ -10,3 +10,15 @@ CREATE TABLE `user` (
   UNIQUE INDEX `uid_UNIQUE` (`uid` ASC),
   UNIQUE INDEX `uname_UNIQUE` (`uname` ASC));
 
+  CREATE TABLE `jujube`.`userBase` (
+  `uid` INT UNSIGNED NOT NULL,
+  `gender` BINARY(1) NULL DEFAULT 0,
+  `money` INT UNSIGNED NULL DEFAULT 0,
+  `exp` INT UNSIGNED NULL DEFAULT 0,
+  `vip` TINYINT(1) UNSIGNED NULL DEFAULT 0,
+  `nickname` VARCHAR(18) NULL DEFAULT 'anonymous',
+  `iconUrl` VARCHAR(100) NULL DEFAULT '',
+  UNIQUE INDEX `uid_UNIQUE` (`uid` ASC),
+  PRIMARY KEY (`uid`));
+
+

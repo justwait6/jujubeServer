@@ -1,4 +1,4 @@
-const ActDef = require('./ActConf');
+const ActDef = require('./ActDef');
 
 let ActSwitch = new Array();
 
