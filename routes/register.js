@@ -18,9 +18,15 @@ router.post('/', function(req, res, next) {
       if (isValid) {
         // if pass, create new user
         userGuard.createNew(registerInfo, (userInfo) => {
-          res.json(myUtil.retObj({
-            token: userInfo.token,
-          }, 0, 'register success!')).send();
+          if (userInfo) {
+            res.json(myUtil.retObj({
+              token: userInfo.token,
+            }, 0, 'register success!')).send();
+          } else {
+            res.json(myUtil.retObj({
+              token: userInfo.token,
+            }, -1, 'fail when creating user, please try again!')).send();
+          }
         });
       } else {
         let errorCode = userGuard.getInvalidCode();

@@ -9,7 +9,7 @@ const sequelize = dbTool.sequelize;
 const User = sequelize.define('user', {
   // attributes
   uid: {
-    type: Sequelize.BIGINT(11),
+    type: Sequelize.INTEGER.UNSIGNED,
     primaryKey: true,
   },
   uname: {
@@ -31,6 +31,8 @@ const User = sequelize.define('user', {
   freezeTableName: true,
   tableName: 'user',
 });
+
+const UserBase = require('./UserBase');
 
 // Query
 /*
@@ -72,12 +74,23 @@ User.update({ uname: "Doe" }, {
 
 User.isNameExist = function(toFindName, callback) {
   // Find a user by name
-  const someUser = User.findOne({
+  User.findOne({
     where: {uname: toFindName},
     attributes: ['uid', ['uname', 'uname']],
   }).then((someUser) => {
     let isRegistered = someUser ? true : false;
     callback && callback(isRegistered);
+  });
+}
+
+User.getUidByName = function(toFindName, callback) {
+  // Find a user uid by name
+  User.findOne({
+    where: {uname: toFindName},
+    attributes: ['uid'],
+  }).then((someUser) => {
+    let uid = someUser ? someUser.uid : null;
+    callback && callback(uid);
   });
 }
 
@@ -90,7 +103,7 @@ User.createNew = function(registerInfo, callback) {
         password: hash,
         email: registerInfo.email,
       }).then((user) => {
-        let userInfo = user ? user.dataValues : {};
+        let userInfo = user ? user.dataValues : null;
         callback && callback(userInfo);
       });
     });
@@ -134,6 +147,42 @@ User.verifyToken = function(token, callback) {
     let uid = isOk ? result.data : null;
     callback && callback(isOk, uid);
   });
+}
+
+/**
+ * @func getUserBaseInfoByName
+ * @param data: a js object
+ * @param data.name: user name to be found.
+ * @param data.XXX: attributes names XXX to fetch.
+ */
+User.getUserBaseInfoByName = function(data, callback) {
+  User.getUidByName(data.name, (uid) => {
+    if (uid) {
+      data.uid = uid
+      User.getUserBaseInfoByUid(data, callback);
+    } else {
+      callback && callback(null);
+    }
+  });
+}
+
+/**
+ * @func getUserBaseInfoByUid
+ * @param data: a js object
+ * @param data.uid: user id to be found.
+ * @param data.XXX: attributes names XXX to fetch.
+ */
+User.getUserBaseInfoByUid = function(data, callback) {
+  UserBase.getInfo(data, callback);
+}
+
+User.getFullUserInfo = function(uid, callback) {
+  UserBase.getFullInfo(uid, callback);
+}
+
+
+User.modifyUserBaseInfo = function(data, callback) {
+  UserBase.modifyBaseInfo(data, callback);
 }
 
 module.exports = User;

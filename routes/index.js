@@ -19,6 +19,8 @@ router.post('*', function(req, res, next) {
     if (typeof(req.body.token) == "string") {
       userGuard.verifyToken(req.body.token, (isOk, uid) => {
         if (isOk) {
+          // attach parsed uid
+          req.body.uid = uid;
           next();
         } else {
           console.log("token verify fail");

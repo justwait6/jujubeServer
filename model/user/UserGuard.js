@@ -35,10 +35,6 @@ let UserGuard = {
 
   _isNameExist: function(name, callback) {
     User.isNameExist(name, function(isNameExist) {
-      if (isNameExist) {
-        self.setInvalidCode(ERR_CODE.USER_EXISTS);
-        self.setInvalidMessage("name already exist!");
-      }
       callback && callback(isNameExist);
     });
   },
@@ -100,6 +96,8 @@ UserGuard.isRegisterValid = function(registerInfo, callback) {
   // async check if name already exists in database
   self._isNameExist(registerInfo.name, (isNameExist) => {
     if (isNameExist) {
+      self.setInvalidCode(ERR_CODE.USER_EXISTS);
+      self.setInvalidMessage("name already exist!");
       return callback && callback(false);
     }
 
@@ -156,6 +154,38 @@ UserGuard.verifyToken = function(token, callback) {
   User.verifyToken(token, callback);
 }
 
+UserGuard._getUserInfoByToken = function(token, callback) {
+  UserGuard.verifyToken(token, (isOk, uid) => {
+    if (isOk) {
+      UserGuard._getFullUserInfo(uid, callback);
+    } else {
+      callback && callback(null)
+    }
+  });
+}
+
+UserGuard._getFullUserInfo = function(uid, callback) {
+  User.getFullUserInfo(uid, callback);
+}
+
+UserGuard.getUserInfoByName = function(queryData, callback) {
+  User.getUserBaseInfoByName(queryData, callback);
+}
+
+UserGuard.getUserInfoByUid = function(queryData, callback) {
+  User.getUserBaseInfoByUid(queryData, callback);
+}
+
+UserGuard.fetchLoginParams = function(token, callback) {
+  UserGuard._getUserInfoByToken(token, (userInfo) => {
+    callback && callback({user: userInfo});
+  });
+}
+
+UserGuard.modifyUserBaseInfo = function(data, callback) {
+  User.modifyUserBaseInfo(data, callback);
+}
+
 UserGuard.setInvalidCode = function(code) {
   UserGuard.invalidCode = code;
 }
@@ -182,4 +212,8 @@ module.exports = {
   login: UserGuard.login,
   getToken: UserGuard.getToken,
   verifyToken: UserGuard.verifyToken,
+  getUserInfoByName: UserGuard.getUserInfoByName,
+  getUserInfoByUid: UserGuard.getUserInfoByUid,  
+  fetchLoginParams: UserGuard.fetchLoginParams,
+  modifyUserBaseInfo: UserGuard.modifyUserBaseInfo,
 }

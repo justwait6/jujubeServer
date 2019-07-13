@@ -17,13 +17,14 @@ router.post('/', function(req, res, next) {
   // check if login info valid
   userGuard.isLoginValid(loginInfo, (isValid, someToken) => {
     if (isValid) {
-
-      let someSwitches = actMgr.getSwitchs();
       // if pass, get login params
-      res.json(myUtil.retObj({
-        token: someToken,
-        switches: someSwitches,
-      }, 0, 'login success!')).send();
+      let someSwitches = actMgr.getSwitchs();
+      userGuard.fetchLoginParams(someToken, (resLoginParams) => {
+        resLoginParams.user = resLoginParams.user;
+        resLoginParams.token = someToken;
+        resLoginParams.switches = someSwitches;
+        res.json(myUtil.retObj(resLoginParams, 0, 'login success!')).send();
+      })
     } else {
       let errorCode = userGuard.getInvalidCode();
       let errorMsg = userGuard.getInvalidMessage();
