@@ -12,7 +12,7 @@ router.get('/', function(req, res, next) {
 
 /* POST home page. */
 router.post('*', function(req, res, next) {
-  if (req.body._interface == "/login") {
+  if (req.body._interface == "/login" || req.body._interface == "/register") {
     next();
   } else {
     // check token if not @route /login

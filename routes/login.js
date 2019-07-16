@@ -19,10 +19,12 @@ router.post('/', function(req, res, next) {
     if (isValid) {
       // if pass, get login params
       let someSwitches = actMgr.getSwitchs();
+      let hallSocket = myConf.sockets.hall;
       userGuard.fetchLoginParams(someToken, (resLoginParams) => {
         resLoginParams.user = resLoginParams.user;
         resLoginParams.token = someToken;
         resLoginParams.switches = someSwitches;
+        resLoginParams.hallSocket = hallSocket;
         res.json(myUtil.retObj(resLoginParams, 0, 'login success!')).send();
       })
     } else {

@@ -19,6 +19,10 @@ MyConf.urls = {
   front: 'http://47.100.99.3:3000',
 }
 
+MyConf.sockets = {
+  hall: '47.100.99.3:9001',
+}
+
 MyConf.db = {
   host: "127.0.0.1",
   username: "root",

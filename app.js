@@ -3,10 +3,13 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
+require("./common/socket/MySocket").initilize();
+
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var registerRouter = require('./routes/register');
 var loginRouter = require('./routes/login');
+var friendRouter = require('./routes/friend');
 var moneyTreeRouter = require('./routes/moneyTree');
 
 var app = express();
@@ -35,6 +38,7 @@ app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/register', registerRouter);
 app.use('/login', loginRouter);
+app.use('/friend', friendRouter);
 app.use('/moneyTree', moneyTreeRouter);
 
 // error handler
