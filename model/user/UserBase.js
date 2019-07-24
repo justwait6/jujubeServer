@@ -3,6 +3,7 @@ let dbTool = require(myConf.requires.dbTool);
 
 const Sequelize = dbTool.Sequelize;
 const sequelize = dbTool.sequelize;
+const Op = Sequelize.Op;
 
 const userBaseAttrs = ['uid', 'gender', 'money', 'exp', 'vip', 'nickname', 'iconUrl'];
 const UserBase = sequelize.define('userBase', {
@@ -59,7 +60,6 @@ UserBase.getInfo = function(data, callback) {
       toFetchAttrs.push(value);
     }
   });
-  console.log('toFetchAttrs', toFetchAttrs);
   // try fetch info data
   UserBase.findOne({
     where: {uid: data.uid},
@@ -88,7 +88,6 @@ UserBase.getFullInfo = function(uid, callback) {
 UserBase.modifyBaseInfo = function(data, callback) {
   let updateAttrs = {};
   Object.keys(data.fields).forEach((key) => {
-    console.log(key,data.fields[key]);
     if (userBaseAttrs.indexOf(key) != -1) {
       updateAttrs[key] = data.fields[key];
     }
@@ -100,6 +99,39 @@ UserBase.modifyBaseInfo = function(data, callback) {
     }
   }).then(() => {
     callback && callback(true);
+  });
+}
+
+
+/**
+ * @func batchGetUserinfo
+ * @param data: a js object
+ * @param data.uidList: a js array, user id list.
+ * @param data.fields: a js array, attributes names to fetch.
+ */
+UserBase.batchGetUserinfo = function(data, callback) {
+  let uidList = data.uidList || [];
+  let fields = data.fields;
+  
+  // WARNNING: if length of uidList <= 0, MUST return in time.
+  // otherwise, ALL user info in database will be returned !!!
+  if (uidList.length <= 0) { callback && callback (null); return; }
+
+  UserBase.findAll({
+    where: {
+      uid: {
+        [Op.or]: uidList
+      }
+    },
+    attributes: fields,
+  }).then((batchUserinfo) => {
+    if (!batchUserinfo) { callback && callback (null); return }
+
+    let resultUserinfos = [];
+    batchUserinfo.forEach(element => {
+      if (element && element.dataValues) { resultUserinfos.push(element.dataValues); }
+    });
+    callback && callback(resultUserinfos);
   });
 }
 

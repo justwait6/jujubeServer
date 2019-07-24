@@ -3,8 +3,9 @@ let MySocket = {};
 var EventEmitter = require("events");
 var event = new EventEmitter();
 
-var uidSocketMgr = require("./UidSocketMgr");
-var userBufMgr = require("./UserBufferMgr").getInstance();
+var userSocketMgr = require("./UserSocketMgr");
+var userBufMgr = require("./UserBufferMgr");
+userBufMgr.initialize();
 const PkgReader = require("./MyPkgReader");
 const PkgBuilder = require("./MyPkgBuilder");
 const EVENT_NAMES = require("../event/EventNames");
@@ -22,29 +23,25 @@ server.on("connection", (socket) => {
         userBufMgr.releaseBuffer(userBuffer);
 
         PkgReader.asyncParse(pkg, (parsedPkg) => {
-          console.log(parsedPkg);
           if (parsedPkg.uid) {
-            uidSocketMgr.updateSocket(parsedPkg.uid, socket);
+            userSocketMgr.bind(parsedPkg.uid, socket);
           }
 
-          if (parsedPkg.cmd == CmdDef.CLISVR_HEART_BEAT) {
-            PkgBuilder.asyncBuild({cmd: CmdDef.CLISVR_HEART_BEAT, random: [{value: 123456}, {value: 123457}]}, (buf) => {
-              if (buf) {
-                socket.write(buf)
-              }
-              // console.log('build binary packet', buf)
+          if (parsedPkg.cmd == CmdDef.CLI_HEART_BEAT) {
+            PkgBuilder.asyncBuild({cmd: CmdDef.SVR_HEART_BEAT, random: [{value: 123456}, {value: 123457}]}, (buf) => {
+              buf && socket.write(buf);
             });
           }
           // event.emit(EVENT_NAMES.PKG_RECIEVE, parsedData);
         });
       }
-      // console.log(pkg);
     });
     
   });
 
   socket.on('close', function() {
-    console.log('client close')
+    // unbind user-socket pair
+    userSocketMgr.unbindBySocket(socket);
   });
 
   socket.on('error', function(err) {
@@ -53,24 +50,6 @@ server.on("connection", (socket) => {
 });
 
 server.listen(9001, () => {
-  console.log('server is on ', JSON.stringify(server.address()));
-
-  /*
-  const uid = 3
-  let sendObj = {
-    random: [{value: 123}]
-  }
-  PkgBuilder.asyncBuild(0x0200, sendObj, (packBuf) => {
-    console.log('packBuf', packBuf);
-    PkgReader.asyncParse(packBuf, (data) => {
-      console.log('__ ', data);
-    })
-  });
-  let socket = uidSocketMgr.getUserSocket(uid);
-  if (socket) {
-    socket.write(pack);
-  }
-  */
 });
 
 

@@ -31,10 +31,8 @@ MyPkgReader.consume = function() {
 
   let parsePkg = {}
   parsePkg.cmd = rawPkg.readInt32BE(6);
-  console.log(parsePkg.cmd)
 
   let curCmdConf = CmdConfig[parsePkg.cmd];
-  console.log("curCmdConf", curCmdConf);
   if (curCmdConf && curCmdConf.fmt) {
     let curPos = HEAD_LEN;
     self.parseFmt(rawPkg, curPos, curCmdConf.fmt, parsePkg);

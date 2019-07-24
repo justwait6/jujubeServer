@@ -64,7 +64,7 @@ function UserPkgBuffer() {
 
   this.checkIsFullPkg = function(callback) {
     if (this._dataLen < HEAD_LEN) {
-      console.log('数据长度小于包头规定长度，等待数据......');
+      console.log('data length < head length waiting data...');
       callback && callback();
     }
 
@@ -83,7 +83,7 @@ function UserPkgBuffer() {
     dataLen = headBuffer.readInt32BE(0);
 
     if (this._dataLen < dataLen) {
-      console.log("缓冲区已有body数据长度小于包头定义body的长度，等待数据......")
+      console.log("body length < defined body length, waiting data...")
       callback && callback();
     } else {
       let pkgBuffer = Buffer.alloc(dataLen);

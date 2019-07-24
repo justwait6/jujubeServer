@@ -10,7 +10,7 @@ CREATE TABLE `user` (
   UNIQUE INDEX `uid_UNIQUE` (`uid` ASC),
   UNIQUE INDEX `uname_UNIQUE` (`uname` ASC));
 
-  CREATE TABLE `jujube`.`userBase` (
+CREATE TABLE `jujube`.`userBase` (
   `uid` INT UNSIGNED NOT NULL,
   `gender` CHAR(1) NULL DEFAULT 0,
   `money` INT UNSIGNED NULL DEFAULT 0,
@@ -20,5 +20,22 @@ CREATE TABLE `user` (
   `iconUrl` VARCHAR(100) NULL DEFAULT '',
   UNIQUE INDEX `uid_UNIQUE` (`uid` ASC),
   PRIMARY KEY (`uid`));
+
+CREATE TABLE `jujube`.`friendRequest` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `srcUid` INT UNSIGNED NOT NULL,
+  `destUid` INT UNSIGNED NOT NULL,
+  `timestamp` INT UNSIGNED NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `idfriendRequest_UNIQUE` (`id` ASC));
+
+CREATE TABLE `jujube`.`friend` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `uid1` INT UNSIGNED NOT NULL,
+  `uid2` INT UNSIGNED NOT NULL,
+  `timestamp` INT UNSIGNED NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `id_UNIQUE` (`id` ASC));
+
 
 

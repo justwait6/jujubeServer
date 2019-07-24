@@ -4,6 +4,7 @@ var router = express.Router();
 var myConf = require('../config/MyConf');
 var myUtil = require(myConf.requires.myUtil);
 var userGuard = require(myConf.paths.model + '/user/UserGuard');
+const ErrorCode = require(myConf.paths.common + '/protocol/ErrorCode');
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -23,12 +24,11 @@ router.post('*', function(req, res, next) {
           req.body.uid = uid;
           next();
         } else {
-          console.log("token verify fail");
-          res.json(myUtil.retObj({}, -101, "token verify fail (maybe expired)"));
+          res.json(myUtil.retObj({}, ErrorCode.TOKEN_EXPIRED, "token verify fail or expired"));
         }
       });
     } else {
-      res.json(myUtil.retObj({}, -100, "no token or token format error! (format should be string)"));
+      res.json(myUtil.retObj({}, ErrorCode.PARAM_INVALID, "no token or token format error! (format should be string)"));
     }
   }
 })

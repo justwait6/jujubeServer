@@ -4,14 +4,13 @@ var router = express.Router();
 var myConf = require('../config/MyConf');
 var myUtil = require(myConf.requires.myUtil);
 var userGuard = require(myConf.paths.model + '/user/UserGuard');
+const ErrorCode = require(myConf.paths.common + '/protocol/ErrorCode');
 
 /* POST users listing. */
 router.post('/', function(req, res, next) {
-  // console.log(req)
 });
 
 router.post('/userinfo', function(req, res, next) {
-  // console.log(req)
   let name = req.body.name || "";
   let decodeFields = JSON.parse(req.body.fields);
   if (typeof(name) == 'string' && name.length > 0) {
@@ -27,12 +26,11 @@ router.post('/userinfo', function(req, res, next) {
       }
     });
   } else {
-    res.json(myUtil.retObj({}, -10001, '@param name error, need be string and not empty!')).send();
+    res.json(myUtil.retObj({}, ErrorCode.PARAM_INVALID, '@param name error, need be string and not empty!')).send();
   }
 });
 
 router.post('/modifyBaseInfo', function(req, res, next) {
-  console.log(req.body);
   let decodeFields = JSON.parse(req.body.fields);
 
   let updateData = {}

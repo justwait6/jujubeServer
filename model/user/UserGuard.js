@@ -1,4 +1,6 @@
 const User = require("./User");
+var myConf = require("../../config/MyConf");
+let UserSocketMgr = require(myConf.paths.common + '/socket/UserSocketMgr');
 
 let ERR_CODE = {
   USER_FORMAT: -100,
@@ -79,6 +81,20 @@ let UserGuard = {
       self.setInvalidMessage("password format invalid!");
     }
     return isFormatValid;
+  },
+
+  _getUserInfoByToken: function(token, callback) {
+    self.verifyToken(token, (isOk, uid) => {
+      if (isOk) {
+        self._getFullUserInfo(uid, callback);
+      } else {
+        callback && callback(null)
+      }
+    });
+  },
+
+  _getFullUserInfo: function(uid, callback) {
+    User.getFullUserInfo(uid, callback);
   }
 };
 
@@ -154,20 +170,6 @@ UserGuard.verifyToken = function(token, callback) {
   User.verifyToken(token, callback);
 }
 
-UserGuard._getUserInfoByToken = function(token, callback) {
-  UserGuard.verifyToken(token, (isOk, uid) => {
-    if (isOk) {
-      UserGuard._getFullUserInfo(uid, callback);
-    } else {
-      callback && callback(null)
-    }
-  });
-}
-
-UserGuard._getFullUserInfo = function(uid, callback) {
-  User.getFullUserInfo(uid, callback);
-}
-
 UserGuard.getUserInfoByName = function(queryData, callback) {
   User.getUserBaseInfoByName(queryData, callback);
 }
@@ -177,7 +179,7 @@ UserGuard.getUserInfoByUid = function(queryData, callback) {
 }
 
 UserGuard.fetchLoginParams = function(token, callback) {
-  UserGuard._getUserInfoByToken(token, (userInfo) => {
+  self._getUserInfoByToken(token, (userInfo) => {
     callback && callback({user: userInfo});
   });
 }
@@ -186,20 +188,28 @@ UserGuard.modifyUserBaseInfo = function(data, callback) {
   User.modifyUserBaseInfo(data, callback);
 }
 
+UserGuard.batchGetUserinfo = function(data, callback) {
+  User.batchGetUserinfo(data, callback);
+}
+
+UserGuard.isUserOnline = function(uid) {
+  return UserSocketMgr.isUserConnected(uid);
+}
+
 UserGuard.setInvalidCode = function(code) {
-  UserGuard.invalidCode = code;
+  self.invalidCode = code;
 }
 
 UserGuard.getInvalidCode = function(name) {
-  return UserGuard.invalidCode;
+  return self.invalidCode;
 }
 
 UserGuard.setInvalidMessage = function(errorMessage) {
-  UserGuard.invalidMessage = errorMessage;
+  self.invalidMessage = errorMessage;
 }
 
 UserGuard.getInvalidMessage = function(name) {
-  return UserGuard.invalidMessage;
+  return self.invalidMessage;
 }
 
 module.exports = {
@@ -216,4 +226,6 @@ module.exports = {
   getUserInfoByUid: UserGuard.getUserInfoByUid,  
   fetchLoginParams: UserGuard.fetchLoginParams,
   modifyUserBaseInfo: UserGuard.modifyUserBaseInfo,
+  batchGetUserinfo: UserGuard.batchGetUserinfo,
+  isUserOnline: UserGuard.isUserOnline,
 }

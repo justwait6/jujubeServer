@@ -108,7 +108,6 @@ User.createNew = function(registerInfo, callback) {
       });
     });
   } catch (error) {
-    // console.log(error);
   }
 };
 
@@ -133,7 +132,6 @@ User.canLogin = function(testName, testPassword, callback) {
       }
     });
   } catch (error) {
-    // console.log(error);
   }
 }
 
@@ -174,6 +172,10 @@ User.getUserBaseInfoByName = function(data, callback) {
  */
 User.getUserBaseInfoByUid = function(data, callback) {
   UserBase.getInfo(data, callback);
+}
+
+User.batchGetUserinfo = function(data, callback) {
+  UserBase.batchGetUserinfo(data, callback);
 }
 
 User.getFullUserInfo = function(uid, callback) {

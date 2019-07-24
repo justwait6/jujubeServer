@@ -12,6 +12,7 @@ MyConf.requires = {
 
 MyConf.paths = {
   model: app + '/model',
+  common: app + '/common',
   config: app + '/config',
 }
 
