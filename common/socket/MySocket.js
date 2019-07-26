@@ -31,6 +31,18 @@ server.on("connection", (socket) => {
             PkgBuilder.asyncBuild({cmd: CmdDef.SVR_HEART_BEAT, random: [{value: 123456}, {value: 123457}]}, (buf) => {
               buf && socket.write(buf);
             });
+          } else if (parsedPkg.cmd == CmdDef.CLI_SEND_CHAT) {
+            // user online, forward
+            console.log('chat recieved');
+            if (userSocketMgr.isUserConnected(parsedPkg.destUid)) {
+              let toSendSocket = userSocketMgr.getUserSocket(parsedPkg.destUid);
+              // modify package name
+              PkgBuilder.modifyCommand(buf, CmdDef.SVR_FORWARD_CHAT);
+              toSendSocket.write(buf);
+              console.log('chat forwarded');
+            } else {
+              console.log("store offline message, to be continued")
+            }
           }
           // event.emit(EVENT_NAMES.PKG_RECIEVE, parsedData);
         });

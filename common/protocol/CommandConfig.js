@@ -23,6 +23,17 @@ let CommandConfig = {
       {name: "deviceId", type: T.SHORT}
     ]
   },
+  [CmdDef.CLI_SEND_CHAT]: {
+    ver: 1,
+    fmt: [
+      {name: "srcUid", type: T.INT},
+      {name: "destUid", type: T.INT},
+      {name: "time", type: T.INT},
+      {name: "text", type: T.STRING},
+    ]
+  },
+
+
   [CmdDef.SVR_HEART_BEAT]: {
     ver: 1,
     fmt: [
@@ -36,7 +47,17 @@ let CommandConfig = {
   [CmdDef.SVR_PUSH]: {
     ver: 1,
     fmt: [
+      {name: "uid", type: T.INT},
       {name: "pushType", type: T.INT},
+    ]
+  },
+  [CmdDef.SVR_FORWARD_CHAT]: {
+    ver: 1,
+    fmt: [
+      {name: "srcUid", type: T.INT},
+      {name: "destUid", type: T.INT},
+      {name: "time", type: T.INT},
+      {name: "text", type: T.STRING},
     ]
   },
 }

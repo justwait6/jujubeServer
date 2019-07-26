@@ -22,6 +22,11 @@ MyPkgBuilder.createHeader = function(buf, cmd) {
   buf.writeInt8(0, 10);
 }
 
+MyPkgBuilder.modifyCommand = function(buf, cmd) {
+  // command, in consistant with client
+  buf.writeInt32BE(cmd, 6);
+}
+
 MyPkgBuilder.createBody = function(buf, cmdConfig, params) {
   if (cmdConfig && cmdConfig.fmt) {
     let curPos = HEAD_LEN;
