@@ -43,6 +43,7 @@ MyPkgReader.consume = function() {
   _isParsing = false;
   self.consume();
 }
+
 MyPkgReader.parseFmt = function(rawPkg, curPos, fmt, resultObj) {
   fmt.forEach((value, idx) => {
     value = value || {};

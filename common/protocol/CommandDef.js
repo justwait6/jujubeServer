@@ -6,7 +6,8 @@ let CommandDef = {
   SVR_HEART_BEAT: 0x0201, // 心跳返回
   SVR_HALL_LOGIN: 0x0203, // 登录大厅返回
   SVR_PUSH: 0x0205, // 服务器自定义推送
-  SVR_FORWARD_CHAT: 0x0301, // 转发聊天
+  SVR_SEND_CHAT_RESP: 0x0301, // 发送聊天返回
+  SVR_FORWARD_CHAT: 0x0303, // 转发聊天
 }
 
 module.exports = CommandDef

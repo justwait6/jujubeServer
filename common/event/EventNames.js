@@ -2,9 +2,11 @@ var EventNames = [];
 
 var INDEX = 1;
 function getIndex() {
-  return INDEX++;
+  return (INDEX++).toString();
 }
 
-EventNames.PKG_RECIEVE = getIndex();
+EventNames.RECIEVE_PKG = getIndex();
+EventNames.SEND_PKG = getIndex();
+EventNames.CLI_CHAT = getIndex();
 
 module.exports = EventNames;

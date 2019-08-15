@@ -26,10 +26,12 @@ let CommandConfig = {
   [CmdDef.CLI_SEND_CHAT]: {
     ver: 1,
     fmt: [
+      {name: "keyId", type: T.INT},
+      {name: "type", type: T.BYTE},
       {name: "srcUid", type: T.INT},
       {name: "destUid", type: T.INT},
-      {name: "time", type: T.INT},
-      {name: "text", type: T.STRING},
+      {name: "sentTime", type: T.INT},
+      {name: "msg", type: T.STRING},
     ]
   },
 
@@ -49,6 +51,15 @@ let CommandConfig = {
     fmt: [
       {name: "uid", type: T.INT},
       {name: "pushType", type: T.INT},
+    ]
+  },
+  [CmdDef.SVR_SEND_CHAT_RESP]: {
+    ver: 1,
+    fmt: [
+      {name: "ret", type: T.BYTE},
+      {name: "keyId", type: T.INT, depends: function(ctx){ return ctx.ret == 0; } },
+      {name: "msgId", type: T.INT, depends: function(ctx){ return ctx.ret == 0; } },
+      {name: "uid", type: T.INT},
     ]
   },
   [CmdDef.SVR_FORWARD_CHAT]: {

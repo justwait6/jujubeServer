@@ -33,9 +33,22 @@ CREATE TABLE `jujube`.`friend` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `uid1` INT UNSIGNED NOT NULL,
   `uid2` INT UNSIGNED NOT NULL,
+  `remark1` VARCHAR(30) NULL,
+  `remark2` VARCHAR(30) NULL,
   `timestamp` INT UNSIGNED NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE INDEX `id_UNIQUE` (`id` ASC));
 
+
+CREATE TABLE `jujube`.`message` (
+  `msgId` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `type` TINYINT(8) UNSIGNED NOT NULL,
+  `status` BIT(1) NOT NULL,
+  `srcUid` INT UNSIGNED NOT NULL,
+  `destUid` INT UNSIGNED NOT NULL,
+  `sentTime` INT UNSIGNED NOT NULL,
+  `msg` TEXT(1024) NOT NULL,
+  PRIMARY KEY (`msgId`),
+  UNIQUE INDEX `msgId_UNIQUE` (`msgId` ASC));
 
 

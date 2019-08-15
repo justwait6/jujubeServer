@@ -40,7 +40,11 @@ MyPkgBuilder.createBody = function(buf, cmdConfig, params) {
 MyPkgBuilder.buildFmt = function(buf, curPos, fmt, wParams) {
   fmt.forEach((value, idx) => {
     value = value || {};
-
+    if (value.depends) {
+      let needValue = value.depends(wParams);
+      if (!needValue) { return; }
+    }
+    
     if (value.type === T.ARRAY) {
       // write array length
       let arrayLength = wParams[value.name].length; // default

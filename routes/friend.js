@@ -55,7 +55,20 @@ router.post('/accpetFriend', function(req, res, next) {
     } else {
       res.json(myUtil.retObj({}, friendUtil.getInvalidCode(), friendUtil.getInvalidMessage()));
     }
-  })
+  });
+});
+
+/* POST accept friend request. */
+router.post('/modifyFriendRemark', function(req, res, next) {
+	let pairList = JSON.parse(req.body.pairList)
+  let params = {uid: req.body.uid, pairList: pairList}
+  friendUtil.batchModifyFriendRemark(params, (ok) => {
+	if (ok) {
+	  res.json(myUtil.retObj({}, 0, "modify friend remarks succ!"));
+	  } else {
+	  res.json(myUtil.retObj({}, friendUtil.getInvalidCode(), friendUtil.getInvalidMessage()));
+	}
+  });
 });
 
 module.exports = router;
