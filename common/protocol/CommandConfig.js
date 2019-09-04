@@ -33,8 +33,7 @@ let CommandConfig = {
       {name: "sentTime", type: T.INT},
       {name: "msg", type: T.STRING},
     ]
-  },
-
+	},
 
   [CmdDef.SVR_HEART_BEAT]: {
     ver: 1,
@@ -70,7 +69,7 @@ let CommandConfig = {
       {name: "time", type: T.INT},
       {name: "text", type: T.STRING},
     ]
-  },
+	},
 }
 
 module.exports = CommandConfig

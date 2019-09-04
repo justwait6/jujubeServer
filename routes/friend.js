@@ -71,5 +71,22 @@ router.post('/modifyFriendRemark', function(req, res, next) {
   });
 });
 
-module.exports = router;
+/* POST friend message list. */
+router.post('/messageList', function(req, res, next) {
+	friendUtil.getMessageList(req.body.uid, (msgList) => {
+		res.json(myUtil.retObj({msgList: msgList || []}, 0, "get messageList succ!"));
+	});
+});
 
+router.post('/someFriendMessage', function(req, res, next) {
+	console.log("request someFriendMessage interface begin..., uid is: ", req.body.uid);
+	friendUtil.getSomeFriendMessage({
+		uid: req.body.uid,
+		friendUid: req.body.friendUid,
+		lastSvrMsgId: req.body.lastSvrMsgId || 0,
+	}, (msgs) => {
+		res.json(myUtil.retObj({msgs: msgs || [], friendUid: req.body.friendUid}, 0, "get friend message succ!"));
+	})
+});
+
+module.exports = router;

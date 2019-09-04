@@ -25,13 +25,14 @@ router.post('/', function(req, res, next) {
         resLoginParams.token = someToken;
         resLoginParams.switches = someSwitches;
         resLoginParams.hallSocket = hallSocket;
-        res.json(myUtil.retObj(resLoginParams, 0, 'login success!')).send();
-      })
+				res.json(myUtil.retObj(resLoginParams, 0, 'login success!')).send();
+			})
+			
     } else {
       let errorCode = userGuard.getInvalidCode();
       let errorMsg = userGuard.getInvalidMessage();
       res.json(myUtil.retObj({}, errorCode, errorMsg)).send();
-    }
+		}
   });
 });
 

@@ -35,6 +35,21 @@ MessageMgr.consume = function() {
   });
 }
 
+MessageMgr.checkHasOfflineMessage = function(uid, callback) {
+	Message.isHasOfflineMessage(uid, callback);
+}
+
+MessageMgr.getMessageList = function(uid, callback) {
+	Message.getMessageList(uid, callback);
+}
+
+MessageMgr.getSomeFriendMessage = function(params, callback) {
+	Message.getSomeFriendMessage(params, callback);
+}
+
 module.exports = {
   asyncStoreMessage: MessageMgr.asyncStoreMessage,
+	checkHasOfflineMessage: MessageMgr.checkHasOfflineMessage,
+	getMessageList: MessageMgr.getMessageList,
+	getSomeFriendMessage: MessageMgr.getSomeFriendMessage,
 }

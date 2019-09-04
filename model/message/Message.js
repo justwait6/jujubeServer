@@ -99,4 +99,64 @@ Message.fetchUnreadMessage = function(destUid, lastMsgId, callback) {
   });
 }
 
+Message.isHasOfflineMessage = function(uid, callback) {
+	Message.findOne({
+		where: {
+			destUid: uid,
+			status: 0 // unread
+		},
+		limit: 1 // limit to one record
+	}).then((someMessage) => {
+		if (someMessage && someMessage.dataValues) {
+			callback && callback(true);
+		} else {
+			callback &&callback(false);
+		}
+	})
+}
+
+Message.getMessageList = function(uid, callback) {
+	Message.findAll({
+		attributes: ['destUid', 'srcUid', [sequelize.fn('COUNT', sequelize.col('srcUid')), 'total']],
+		where: {
+			destUid: uid,
+			status: 0, // unread
+		},
+		group: ['srcUid'],
+	}).then((someMessageList) => {
+		if (someMessageList) {
+			let retMsgList = new Array();
+			someMessageList.forEach((value, idx) => {
+				retMsgList.push(value.dataValues);
+			});
+			callback && callback(retMsgList);
+		} else {
+			callback &&callback(null);
+		}
+	});
+}
+
+Message.getSomeFriendMessage = function(data, callback) {
+	Message.findAll({
+		where: {
+			srcUid: data.friendUid,
+			destUid: data.uid,
+			status: 0, // unread
+			msgId: {
+				[Op.gt]: data.lastSvrMsgId
+			},
+		},
+	}).then((someMessages) => {
+		if (someMessages) {
+			let retMessages = new Array();
+			someMessages.forEach((value, idx) => {
+				retMessages.push(value.dataValues);
+			});
+			callback && callback(retMessages);
+		} else {
+			callback &&callback(null);
+		}
+	});
+}
+
 module.exports = Message;

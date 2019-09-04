@@ -5,7 +5,7 @@ var myConf = require('../../config/MyConf');
 const CmdDef = require(myConf.paths.common + "/protocol/CommandDef");
 const MyPkgBuilder = require(myConf.paths.common + "/socket/MyPkgBuilder");
 var userGuard = require(myConf.paths.model + "/user/UserGuard");
-var SvrPushMgr = require(myConf.paths.model + '/serverPush/ServerPushMgr');
+var svrPushMgr = require(myConf.paths.model + '/serverPush/ServerPushMgr');
 var msgMgr = require(myConf.paths.model + '/message/MessageMgr');
 
 const EVENT_NAMES = require(myConf.paths.common + "/event/EventNames");
@@ -41,7 +41,7 @@ ChatSvs.onCliChat = function(parsedPkg) {
   // check if dest user is online
   if (userGuard.isUserOnline(parsedPkg.destUid)) {
     // notify user new messages
-    SvrPushMgr.pushTypeFriend({uid: parsedPkg.destUid});
+    svrPushMgr.pushTypeFriend({uid: parsedPkg.destUid});
   } else {
     // mark offline friend red dots
     console.log("store offline red dots, to be continued");

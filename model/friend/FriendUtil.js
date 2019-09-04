@@ -4,10 +4,16 @@ var self = FriendUtil;
 
 var myConf = require('../../config/MyConf');
 var userGuard = require(myConf.paths.model + '/user/UserGuard');
-var SvrPushMgr = require(myConf.paths.model + '/serverPush/ServerPushMgr');
+var svrPushMgr = require(myConf.paths.model + '/serverPush/ServerPushMgr');
 const ErrorCode = require(myConf.paths.common + '/protocol/ErrorCode');
 const Friend = require('./Friend');
 const FriendRequest = require('./FriendRequest');
+
+var msgMgr = require(myConf.paths.model + '/message/MessageMgr');
+const EVENT_NAMES = require(myConf.paths.common + "/event/EventNames");
+const eventMgr = require(myConf.paths.common + "/event/EventMgr");
+
+eventMgr.on(EVENT_NAMES.USER_LOGIN, function(data) { self.onUserLogin(data) } );
 
 let ERR_CODE = {
   FRIEND_IS_SELF: -100,
@@ -29,7 +35,7 @@ FriendUtil.reqAdd = function(params, callback) {
   // notify immdietely if dest uid online
   if (userGuard.isUserOnline(params.destUid)) {
     console.log('user is online!!! uid: ', params.destUid);
-    SvrPushMgr.pushTypeFriend({uid: params.destUid});
+    svrPushMgr.pushTypeFriend({uid: params.destUid});
   }
 }
 
@@ -144,6 +150,37 @@ FriendUtil.getInvalidMessage = function(name) {
   return self.invalidMessage;
 }
 
+FriendUtil.onUserLogin = function(uid) {
+	console.log("user login success! uid is: ", uid)
+	self._checkNotifyFriend(uid)
+}
+
+FriendUtil._checkNotifyFriend = function(uid) {
+	// check if has new friend requests
+	FriendRequest.isHasRequest(uid, function(isHasRequest) {
+		console.log("FriendUtil._checkNotifyFriend isHasRequest: ", isHasRequest);
+		if (isHasRequest) {
+			svrPushMgr.pushTypeFriend({uid: uid});
+		}
+	});
+
+	// check if has offline messages
+	msgMgr.checkHasOfflineMessage(uid, function(isHasOfflineMessage) {
+		console.log("FriendUtil._checkNotifyFriend isHasOfflineMessage: ", isHasOfflineMessage);
+		if (isHasOfflineMessage) {
+			svrPushMgr.pushTypeFriend({uid: uid});
+		}
+	});
+}
+
+FriendUtil.getMessageList = function(uid, callback) {
+	msgMgr.getMessageList(uid, callback);
+}
+
+FriendUtil.getSomeFriendMessage = function(params, callback) {
+	msgMgr.getSomeFriendMessage(params, callback);
+}
+
 module.exports = {
   getInvalidCode: FriendUtil.getInvalidCode,
   getInvalidMessage: FriendUtil.getInvalidMessage,
@@ -153,4 +190,6 @@ module.exports = {
   deleteReqAddRecord: FriendUtil.deleteReqAddRecord,
   getFriendList: FriendUtil.getFriendList,
   batchModifyFriendRemark: FriendUtil.batchModifyFriendRemark,
+	getMessageList: FriendUtil.getMessageList,
+	getSomeFriendMessage: FriendUtil.getSomeFriendMessage,
 }

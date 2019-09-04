@@ -101,4 +101,17 @@ FriendRequest.getReqAddList = function(uid, callback) {
   });
 }
 
+FriendRequest.isHasRequest = function(uid, callback) {
+	FriendRequest.findOne({
+    where: {destUid: uid},
+    attributes: ['id', 'srcUid', 'destUid', 'timestamp'],
+  }).then((someRecord) => {
+    if (someRecord) {
+      callback && callback(someRecord.dataValues);
+    } else {
+      callback && callback(null);
+    }
+  });
+}
+
 module.exports = FriendRequest;
