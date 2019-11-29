@@ -1,6 +1,6 @@
 "use strict";
 
-let app = '/root/test/jujubeServer';
+let app = '/root/project/jujubeServer';
 
 let MyConf = {}
 
@@ -17,11 +17,11 @@ MyConf.paths = {
 }
 
 MyConf.urls = {
-  front: 'http://47.100.99.3:3000',
+  front: 'http://106.53.26.252:3000',
 }
 
 MyConf.sockets = {
-  hall: '47.100.99.3:9001',
+  hall: '106.53.26.252:9001',
 }
 
 MyConf.db = {
