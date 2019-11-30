@@ -89,4 +89,15 @@ router.post('/someFriendMessage', function(req, res, next) {
 	})
 });
 
+router.post('/updateMessageRead', function(req, res, next) {
+	console.log("request updateMessageRead interface begin..., uid is: ", req.body.uid);
+	friendUtil.uploadMessageRead({
+		uid: req.body.uid,
+		friendUid: req.body.friendUid,
+		lastSvrMsgId: req.body.lastSvrMsgId || 0,
+	}, (msgs) => {
+		res.json(myUtil.retObj({}, 0, "upload message read succ!"));
+	})
+});
+
 module.exports = router;

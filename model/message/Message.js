@@ -159,4 +159,18 @@ Message.getSomeFriendMessage = function(data, callback) {
 	});
 }
 
+Message.setMessageRead = function(data, callback) {
+	// set all messages whose id is less than or equal to lastReadMsgId to status "already read"
+	Message.update({ status: 1 }, {
+		where: {
+			srcUid: data.srcUid || 0,
+			destUid: data.destUid || 0,
+			msgId: {
+				[Op.lte]: data.lastReadMsgId
+			},
+		}
+	}).then(() => {
+	});
+}
+
 module.exports = Message;

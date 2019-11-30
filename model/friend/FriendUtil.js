@@ -181,6 +181,10 @@ FriendUtil.getSomeFriendMessage = function(params, callback) {
 	msgMgr.getSomeFriendMessage(params, callback);
 }
 
+FriendUtil.uploadMessageRead = function(params, callback) {
+	msgMgr.uploadMessageRead(params, callback);
+}
+
 module.exports = {
   getInvalidCode: FriendUtil.getInvalidCode,
   getInvalidMessage: FriendUtil.getInvalidMessage,
@@ -192,4 +196,5 @@ module.exports = {
   batchModifyFriendRemark: FriendUtil.batchModifyFriendRemark,
 	getMessageList: FriendUtil.getMessageList,
 	getSomeFriendMessage: FriendUtil.getSomeFriendMessage,
+	uploadMessageRead: FriendUtil.uploadMessageRead,
 }

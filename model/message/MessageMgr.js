@@ -47,9 +47,15 @@ MessageMgr.getSomeFriendMessage = function(params, callback) {
 	Message.getSomeFriendMessage(params, callback);
 }
 
+MessageMgr.uploadMessageRead = function(params, callback) {
+	params = params || {}
+	Message.setMessageRead({srcUid: params.friendUid || 0, destUid: params.uid || 0, lastReadMsgId: params.lastSvrMsgId || 0}, callback);
+}
+
 module.exports = {
   asyncStoreMessage: MessageMgr.asyncStoreMessage,
 	checkHasOfflineMessage: MessageMgr.checkHasOfflineMessage,
 	getMessageList: MessageMgr.getMessageList,
 	getSomeFriendMessage: MessageMgr.getSomeFriendMessage,
+	uploadMessageRead: MessageMgr.uploadMessageRead,
 }
