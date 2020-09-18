@@ -1,7 +1,7 @@
 const CmdDef = require("./CommandDef");
 const T = require("../socket/PkgDataType");
 
-let CommandConfig = {
+let CommandConfig = { // Rummy Server, 只有一个协议
   [CmdDef.CLI_HEART_BEAT]: {
     ver: 1,
     fmt: [
@@ -95,6 +95,62 @@ let CommandConfig = {
       {name: "tid", type: T.INT},
       {name: "gameId", type: T.INT},
       {name: "level", type: T.INT},
+    ]
+  },
+  [CmdDef.SVR_ENTER_ROOM]: {
+    ver: 1,
+    fmt: [
+      {name: "ret", type: T.BYTE},
+      {name: "tid", type: T.INT, depends: function(ctx){ return ctx.ret == 0; } },
+      {name: "level", type: T.INT, depends: function(ctx){ return ctx.ret == 0; } },
+      {name: "state", type: T.INT, depends: function(ctx){ return ctx.ret == 0; } },
+      {name: "smallbet", type: T.INT, depends: function(ctx){ return ctx.ret == 0; } },
+      {name: "dSeatId", type: T.INT, depends: function(ctx){ return ctx.ret == 0; } },
+      {name: "players", type: T.ARRAY, lengthType: T.BYTE, depends: function(ctx){ return ctx.ret == 0 },
+        fmt: [
+          {name: "uid", type: T.INT},
+          {name: "seatId", type: T.INT},
+          {name: "money", type: T.LONG},
+          {name: "gold", type: T.LONG},
+          {name: "userinfo", type: T.STRING},
+          {name: "gameinfo", type: T.STRING},
+          {name: "state",type: T.INT}
+        ]
+      },
+      {name: "groups", type: T.ARRAY, lengthType: T.BYTE, depends: function(ctx){ return ctx.ret == 0 && (ctx.state == 1) },
+        fmt: [
+          {name: "cards", type: T.ARRAY, lengthType: T.BYTE, 
+            fmt: [
+              {name: "card", type: T.BYTE},
+            ]
+          },
+        ]
+      },
+      {name: "drawCardPos", type: T.INT, depends: function(ctx){ return ctx.ret == 0 && (ctx.state == 1) } },
+      {name: "dropCard", type: T.BYTE, depends: function(ctx){ return ctx.ret == 0 && (ctx.state == 1) } },
+      {name: "magicCard", type: T.BYTE, depends: function(ctx){ return ctx.ret == 0 && (ctx.state == 1) } },
+      {name: "heapCardNum", type: T.INT, depends: function(ctx){ return ctx.ret == 0 && (ctx.state == 1) } },
+      {name: "operUid", type: T.INT, depends: function(ctx){ return ctx.ret == 0 && (ctx.state == 1) } },
+      {name: "leftOperSec", type: T.INT, depends: function(ctx){ return ctx.ret == 0 && (ctx.state == 1) } },
+      {name: "users", type: T.ARRAY, lengthType: T.BYTE, depends: function(ctx){ return ctx.ret == 0 && (ctx.state == 1) },
+        fmt: [
+          {name: "uid", type: T.INT},
+          {name: "operStatus", type: T.BYTE},
+          {name: "isDrop", type: T.BYTE},
+          {name: "isNeedDeclare", type: T.BYTE},
+          {name: "isFinishDeclare", type: T.BYTE},
+          {name: "groups", type: T.ARRAY, lengthType: T.BYTE, depends: function(ctx){ return ctx.ret == 0 && (ctx.state == 1) },
+            fmt: [
+              {name: "cards", type: T.ARRAY, lengthType: T.BYTE, 
+                fmt: [
+                  {name: "card", type: T.BYTE},
+                ]
+              },
+            ]
+          },
+        ]
+      },
+      {name: "finishCard", type: T.BYTE, depends: function(ctx){ return ctx.ret == 0 && (ctx.state == 1) } },
     ]
   },
   

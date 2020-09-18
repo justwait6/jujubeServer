@@ -3,7 +3,6 @@ var self = ChatSvs;
 
 var myConf = require('../../config/MyConf');
 const CmdDef = require(myConf.paths.common + "/protocol/CommandDef");
-const myPkgBuilder = require(myConf.paths.common + "/socket/MyPkgBuilder");
 var userGuard = require(myConf.paths.model + "/user/UserGuard");
 var svrPushMgr = require(myConf.paths.model + '/serverPush/ServerPushMgr');
 var msgMgr = require(myConf.paths.model + '/message/MessageMgr');
@@ -20,25 +19,21 @@ ChatSvs.onCliChat = function(parsedPkg) {
   let msgObj = parsedPkg;
   msgMgr.asyncStoreMessage(msgObj, (isOk, msgId) => {
     if (!isOk) {
-    // msg storage fail.
-    myPkgBuilder.asyncBuild({
-      cmd: CmdDef.SVR_SEND_CHAT_RESP, ret: -1, uid: parsedPkg.srcUid
-    }, (packet) => {
-      packet && eventMgr.emit(EVENT_NAMES.SEND_PKG, {uid: parsedPkg.srcUid, pkg: packet});
-    });
+      // msg storage fail.
+      eventMgr.emit(EVENT_NAMES.SEND_PKG, {uid: parsedPkg.srcUid, prePkg: {
+        cmd: CmdDef.SVR_SEND_CHAT_RESP, ret: -1, uid: parsedPkg.srcUid
+      }});
       return;
     };
 
     // response to src user(msg recieved)
-    myPkgBuilder.asyncBuild({
+    eventMgr.emit(EVENT_NAMES.SEND_PKG, {uid: parsedPkg.srcUid, prePkg: {
       cmd: CmdDef.SVR_SEND_CHAT_RESP,
       ret: 0,
       keyId: parsedPkg.keyId,
       msgId: msgId,
       uid: parsedPkg.srcUid
-    }, (packet) => {
-      packet && eventMgr.emit(EVENT_NAMES.SEND_PKG, {uid: parsedPkg.srcUid, pkg: packet});
-    });
+    }});
   });
 
   // check if dest user is online

@@ -148,7 +148,7 @@ MyPkgBuilder.writePrimitive = function(buf, value, primeType, writePos) {
   } else if (primeType === T.ULONG) {
     return buf.writeBigUInt64LE(value, writePos);
   } else {
-    console.log("MyPkgReader.getPrimitive ERROR: undefined primitive type!");
+    console.log("MyPkgBuilder.getPrimitive ERROR: undefined primitive type!");
   }
 }
 

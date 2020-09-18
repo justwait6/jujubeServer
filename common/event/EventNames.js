@@ -6,7 +6,7 @@ function getIndex() {
 }
 
 EventNames.RECIEVE_PKG = getIndex();
-EventNames.SEND_PKG = getIndex();
+EventNames.PROCESS_OUT_PKG = getIndex();
 EventNames.CLI_CHAT = getIndex();
 EventNames.USER_LOGIN = getIndex();
 

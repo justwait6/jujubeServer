@@ -5,9 +5,10 @@ UserSocketMgr.uSktList = {};
 UserSocketMgr.uBufferList = {};
 
 var myConf = require('../../config/MyConf');
+const myPkgBuilder = require(myConf.paths.common + "/socket/MyPkgBuilder");
 const eventMgr = require(myConf.paths.common + "/event/EventMgr");
 const EVENT_NAMES = require("../event/EventNames");
-eventMgr.on(EVENT_NAMES.SEND_PKG, function(data) {self.sendPack(data)} );
+eventMgr.on(EVENT_NAMES.PROCESS_OUT_PKG, function(data) {self.asyncSendPack(data)} );
 
 UserSocketMgr.bind = function(uid, socket) {
   self.uSktList[uid] = socket;
@@ -41,9 +42,11 @@ UserSocketMgr.findUserBySocket = function(socket) {
   }
 }
 
-UserSocketMgr.sendPack = function(data) {
+UserSocketMgr.asyncSendPack = function(data) {
   console.log(data.uid)
-  self._send(data.uid, data.pkg);
+  myPkgBuilder.asyncBuild(data.prePkg, (packet) => {
+    packet && self._send(data.uid, packet);
+  })
 }
 
 UserSocketMgr._send = function(uid, buf) {
