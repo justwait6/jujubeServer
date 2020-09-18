@@ -3,14 +3,17 @@ var self = ChatSvs;
 
 var myConf = require('../../config/MyConf');
 const CmdDef = require(myConf.paths.common + "/protocol/CommandDef");
-const MyPkgBuilder = require(myConf.paths.common + "/socket/MyPkgBuilder");
+const myPkgBuilder = require(myConf.paths.common + "/socket/MyPkgBuilder");
 var userGuard = require(myConf.paths.model + "/user/UserGuard");
 var svrPushMgr = require(myConf.paths.model + '/serverPush/ServerPushMgr');
 var msgMgr = require(myConf.paths.model + '/message/MessageMgr');
 
 const EVENT_NAMES = require(myConf.paths.common + "/event/EventNames");
 const eventMgr = require(myConf.paths.common + "/event/EventMgr");
-eventMgr.on(EVENT_NAMES.CLI_CHAT, function(data) { self.onCliChat(data) } );
+
+ChatSvs.start = function() {
+  eventMgr.on(EVENT_NAMES.CLI_CHAT, function(data) { self.onCliChat(data) } );
+}
 
 ChatSvs.onCliChat = function(parsedPkg) {
   // store in offline db
@@ -18,7 +21,7 @@ ChatSvs.onCliChat = function(parsedPkg) {
   msgMgr.asyncStoreMessage(msgObj, (isOk, msgId) => {
     if (!isOk) {
     // msg storage fail.
-    MyPkgBuilder.asyncBuild({
+    myPkgBuilder.asyncBuild({
       cmd: CmdDef.SVR_SEND_CHAT_RESP, ret: -1, uid: parsedPkg.srcUid
     }, (packet) => {
       packet && eventMgr.emit(EVENT_NAMES.SEND_PKG, {uid: parsedPkg.srcUid, pkg: packet});
@@ -27,7 +30,7 @@ ChatSvs.onCliChat = function(parsedPkg) {
     };
 
     // response to src user(msg recieved)
-    MyPkgBuilder.asyncBuild({
+    myPkgBuilder.asyncBuild({
       cmd: CmdDef.SVR_SEND_CHAT_RESP,
       ret: 0,
       keyId: parsedPkg.keyId,
