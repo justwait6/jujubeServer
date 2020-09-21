@@ -13,7 +13,7 @@ RummySvr.init = function() {
 
 RummySvr.preAllocTable = function() {
 	for (i = 0; i < RummyConst.MAX_PRE_ALLOC_TABLE; i++) {
-        self.tableList_.push(new RummyTable(i));
+        self.tableList_.push(new RummyTable.Table(i + 1));
     }
 }
 
@@ -22,11 +22,22 @@ RummySvr.fetchOptTableId = function(gameId, level) {
 	return 1 // todo, write "1" for trunk
 }
 
+RummySvr.getTable = function(tableId) {
+    let toFindTable = null;
+    self.tableList_.forEach(table => {
+        if (table.getTid() == tableId) {
+            toFindTable = table;
+        }
+    });
+    return toFindTable;
+}
+
 RummySvr.destroyTable = function(params, callback) {
 
 }
 
 module.exports = {
-    allocTable: RummySvr.allocTable,
+    init: RummySvr.init,
     fetchOptTableId: RummySvr.fetchOptTableId,
+    getTable: RummySvr.getTable,
 }

@@ -10,6 +10,7 @@ const eventMgr = require(myConf.paths.common + "/event/EventMgr");
 
 RummySvs.start = function() {
     eventMgr.on(EVENT_NAMES.RECIEVE_PKG, function(data) { self.onPackageReceived(data) } );
+    rummySvr.init();
 }
 
 RummySvs.onPackageReceived = function(parsedPkg) {
@@ -33,12 +34,29 @@ RummySvs.doCliGetTable = function(parsedPkg) {
 }
 
 RummySvs.doCliEnterRoom = function(parsedPkg) {
-    let tableId = rummySvr.fetchOptTableId(parsedPkg.gameId, parsedPkg.level);
-
-    eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: parsedPkg.uid, prePkg: {
-        cmd: CmdDef.SVR_ENTER_ROOM,
-        ret: -1,
-    }});
+    let retPrePkg = {cmd: CmdDef.SVR_ENTER_ROOM};
+    let table = rummySvr.getTable(parsedPkg.tid);
+    table.doPlayerLogin(parsedPkg.uid, parsedPkg.userinfo);
+    retPrePkg.tid = table.getTid();
+    retPrePkg.level = table.getLevel();
+    retPrePkg.state = table.getState();
+    retPrePkg.smallbet = table.getSmallbet();
+    retPrePkg.dUid = table.getDealerUid();
+    retPrePkg.players = new Array();
+    let tPlayers = table.getPlayers()
+    for (let i = 0; i < tPlayers.length; i++) {
+        let player = {}
+        player.uid = tPlayers[i].getUid();
+        player.seatId = tPlayers[i].getSeatId();
+        player.money = tPlayers[i].getMoney();
+        player.gold = tPlayers[i].getGold();
+        player.userinfo = tPlayers[i].getUserinfo();
+        player.state = tPlayers[i].getPlayState();
+        retPrePkg.players.push(player);
+    }
+    retPrePkg.ret = 0;
+    console.log(retPrePkg)
+    eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: parsedPkg.uid, prePkg: retPrePkg});
 
     // eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: parsedPkg.uid, prePkg: {
     //     cmd: CmdDef.SVR_ENTER_ROOM,

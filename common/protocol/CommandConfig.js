@@ -105,7 +105,7 @@ let CommandConfig = { // Rummy Server, 只有一个协议
       {name: "level", type: T.INT, depends: function(ctx){ return ctx.ret == 0; } },
       {name: "state", type: T.INT, depends: function(ctx){ return ctx.ret == 0; } },
       {name: "smallbet", type: T.INT, depends: function(ctx){ return ctx.ret == 0; } },
-      {name: "dSeatId", type: T.INT, depends: function(ctx){ return ctx.ret == 0; } },
+      {name: "dUid", type: T.INT, depends: function(ctx){ return ctx.ret == 0; } },
       {name: "players", type: T.ARRAY, lengthType: T.BYTE, depends: function(ctx){ return ctx.ret == 0 },
         fmt: [
           {name: "uid", type: T.INT},
@@ -113,7 +113,6 @@ let CommandConfig = { // Rummy Server, 只有一个协议
           {name: "money", type: T.LONG},
           {name: "gold", type: T.LONG},
           {name: "userinfo", type: T.STRING},
-          {name: "gameinfo", type: T.STRING},
           {name: "state",type: T.INT}
         ]
       },

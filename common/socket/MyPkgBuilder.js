@@ -32,9 +32,30 @@ MyPkgBuilder.createBody = function(buf, cmdConfig, params) {
     let curPos = HEAD_LEN;
     _bufferEndPos = curPos // default;
     _bufferEndPos = self.buildFmt(buf, curPos, cmdConfig.fmt, params);
+    console.log("_bufferEndPos: ", _bufferEndPos)
   } else {
     console.log("MyPkgBuilder.createBody ERROR: no cmd config or cmd config.fmt!")
   }
+}
+
+function getUtf8Length(inputStr) {
+  let totalLength = 0;
+  for (let i = 0; i < inputStr.length; i++) {
+    if (inputStr.charCodeAt(i) <= parseInt("0x7f")) {
+      totalLength += 1;
+    } else if (inputStr.charCodeAt(i) <= parseInt("0x7FF")) {
+      totalLength += 2;
+    } else if (inputStr.charCodeAt(i) <= parseInt("0xFFFF")) {
+      totalLength += 3;
+    } else if (inputStr.charCodeAt(i) <= parseInt("0x1FFFFF")) {
+      totalLength += 4;
+    } else if (inputStr.charCodeAt(i) <= parseInt("0x3FFFFFF")) {
+      totalLength += 5;
+    } else {
+      totalLength += 6;
+    }
+  }
+ return totalLength ;
 }
 
 MyPkgBuilder.buildFmt = function(buf, curPos, fmt, wParams) {
@@ -64,11 +85,17 @@ MyPkgBuilder.buildFmt = function(buf, curPos, fmt, wParams) {
         }
       }
     } else if (value.type === T.STRING) {
+      // console.log("buf before write string: ", buf)
+      // console.log("write string curPos: " + curPos)
       let wString = wParams[value.name];
-      buf.writeUInt32BE(wString.length);
-      buf.write(wString, 'utf8');
-      buf.writeInt8(0);
-      curPos = curPos + value.length + 1;
+      // block begin
+      let strLen = getUtf8Length(wString);
+      buf.writeUInt32BE(strLen + 1, curPos); // 1 represents the "\0" padding at the end
+      buf.write(wString, curPos + 4, strLen, 'utf8') // 4 bytes the string length size(unsigned int)
+      buf.writeInt8(0, curPos + 4 + strLen); // 1 byte the "\0" length size.
+      curPos = curPos + 4 + strLen + 1 
+      // block end
+      console.log("write " + "value: " + wString + ", Type: string" + ", writePos: " + curPos);
     } else {
       let takeBytes = self.getPrimitiveBytes(value.type);
       self.writePrimitive(buf, wParams[value.name], value.type, curPos);
@@ -94,7 +121,6 @@ MyPkgBuilder.consume = function() {
   let buildConf = _buildCache.pop();
   let params = buildConf.params;
   let callback = buildConf.callback;
-
   self.createHeader(_buffer, params.cmd || 0);
   self.createBody(_buffer, CmdConfig[params.cmd], params);
 
@@ -106,7 +132,6 @@ MyPkgBuilder.consume = function() {
 
   // encode body bytes
   self.myByteEncode(buildBuf)
-
   callback && callback(buildBuf);
   _isBuilding = false;
   self.consume();
@@ -131,6 +156,7 @@ MyPkgBuilder.getPrimitiveBytes = function(primeType) {
 
 
 MyPkgBuilder.writePrimitive = function(buf, value, primeType, writePos) {
+  console.log("write " + "value: " + value + ", primeType: ", primeType + ", writePos: " + writePos);
   if (primeType === T.BYTE) {
     return buf.writeInt8(value, writePos);
   } else if(primeType === T.UBYTE) {
