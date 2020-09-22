@@ -18,7 +18,7 @@ class Player {
     }
 
     getSeatId() {
-        return this.seatId_ || -1;
+        return this.seatId_;
     }
 
     setMoney(money) {

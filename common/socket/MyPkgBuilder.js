@@ -32,7 +32,6 @@ MyPkgBuilder.createBody = function(buf, cmdConfig, params) {
     let curPos = HEAD_LEN;
     _bufferEndPos = curPos // default;
     _bufferEndPos = self.buildFmt(buf, curPos, cmdConfig.fmt, params);
-    console.log("_bufferEndPos: ", _bufferEndPos)
   } else {
     console.log("MyPkgBuilder.createBody ERROR: no cmd config or cmd config.fmt!")
   }
@@ -85,7 +84,6 @@ MyPkgBuilder.buildFmt = function(buf, curPos, fmt, wParams) {
         }
       }
     } else if (value.type === T.STRING) {
-      // console.log("buf before write string: ", buf)
       // console.log("write string curPos: " + curPos)
       let wString = wParams[value.name];
       // block begin
@@ -95,7 +93,7 @@ MyPkgBuilder.buildFmt = function(buf, curPos, fmt, wParams) {
       buf.writeInt8(0, curPos + 4 + strLen); // 1 byte the "\0" length size.
       curPos = curPos + 4 + strLen + 1 
       // block end
-      console.log("write " + "value: " + wString + ", Type: string" + ", writePos: " + curPos);
+      // console.log("write " + "value: " + wString + ", Type: string" + ", writePos: " + curPos);
     } else {
       let takeBytes = self.getPrimitiveBytes(value.type);
       self.writePrimitive(buf, wParams[value.name], value.type, curPos);
@@ -156,7 +154,7 @@ MyPkgBuilder.getPrimitiveBytes = function(primeType) {
 
 
 MyPkgBuilder.writePrimitive = function(buf, value, primeType, writePos) {
-  console.log("write " + "value: " + value + ", primeType: ", primeType + ", writePos: " + writePos);
+  // console.log("write " + "value: " + value + ", primeType: ", primeType + ", writePos: " + writePos);
   if (primeType === T.BYTE) {
     return buf.writeInt8(value, writePos);
   } else if(primeType === T.UBYTE) {

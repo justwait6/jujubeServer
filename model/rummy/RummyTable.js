@@ -45,26 +45,38 @@ class Table {
     getPlayers() {
         return this.players_ || [];
     }
+    isPlayerExist(uid) {
+        let isExist = false;
+        this.players_.forEach((player) => {
+            if (player.getUid() == uid) {
+                isExist = true;
+            }
+        })
+        return isExist;
+    }
     insertPlayer(player) {
-        this.players_.push(player);
+        if (!this.isPlayerExist(player.getUid())) {
+            this.players_.push(player);
+        }
     }
     deletePlayerByUid(uid) {
+        let player = null;
         for (let i = 0; i < this.players_.length; i++) {
             if (this.players_[i].getUid() == uid) {
-                this.players_.splice(i, 1);
+                player = this.players_.splice(i, 1)[0];
+            }
+        }
+        return player;
+    }
+    getPlayerByUid(uid) {
+        for (let i = 0; i < this.players_.length; i++) {
+            if (this.players_[i].getUid() == uid) {
+                return this.players_[i];
             }
         }
     }
-    getSeatIdByUid(uid) {
-        let seatId = -1;
-        this.players_.forEach(player => {
-            if (uid == player.getUid()) {
-                return player.getSeatId();
-            }
-        });
-        return seatId;
-    }
     randomGetIdleSeatId() {
+        console.log("hhhhh", this.players_.length)
         if (this.players_.length >= RummyConst.MAX_TABLE_PLAYERS) {
             return -1;
         }
@@ -74,12 +86,12 @@ class Table {
         });
         usedSeats.sort((a, b) => a - b);
         let idleSeats = new Array();
-        for (i = 1; i <= RummyConst.MAX_TABLE_PLAYERS; i++) {
+        for (i = 0; i < RummyConst.MAX_TABLE_PLAYERS; i++) {
             if (!usedSeats.includes(i)) {
                 idleSeats.push(i);
             }
         }
-        let idx = getRandomInteger(1, idleSeats.length);
+        let idx = getRandomInteger(0, idleSeats.length - 1);
         return idleSeats[idx];
     }
 
@@ -87,8 +99,22 @@ class Table {
         let player = new RummyPlayer.Player(uid, userinfo);
         player.setPlayState(RummyConst.PLAYER_STATE_OFF);
         let seatId = this.randomGetIdleSeatId();
+        console.log("allocated seatid: ", seatId)
         player.setSeatId(seatId);
         this.insertPlayer(player);
+    }
+
+    doPlayerExit(uid) {
+        let exitParams = {};
+        exitParams.ret = -1;
+        let isExist = this.isPlayerExist(uid);
+        if (isExist) {
+            let player = this.deletePlayerByUid(uid);
+            exitParams.ret = 0;
+            exitParams.money = player.getMoney();
+            exitParams.gold = player.getGold();
+        }
+        return exitParams;
     }
 }
 RummyTable.Table = Table;

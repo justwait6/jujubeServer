@@ -43,7 +43,6 @@ UserSocketMgr.findUserBySocket = function(socket) {
 }
 
 UserSocketMgr.asyncSendPack = function(data) {
-  console.log(data.uid)
   myPkgBuilder.asyncBuild(data.prePkg, (packet) => {
     packet && self._send(data.uid, packet);
   })
