@@ -17,6 +17,17 @@ let CommandDef = {
   CLI_GET_TABLE: 0x0400, // 获取桌子信息
   CLI_ENTER_ROOM: 0x0402, // 登录房间
   CLI_EXIT_ROOM: 0x0404, // 主动请求退出房间
+  CLI_REQ_SIT: 0x0406, // 主动请求坐下
+  CLI_REQ_SWITCH_TABLE: 0x0408, // 主动请求换桌
+  CLI_REQ_STAND: 0x040A, // 主动请求站起
+  CLI_RUMMY_DRAW_CARD: 0x040C, // Rummy请求摸牌
+  CLI_RUMMY_DISCARD_CARD: 0x040E, // Rummy请求出牌
+  CLI_RUMMY_FINISH: 0x0410, // Rummy请求Finish
+  CLI_RUMMY_DECLARE: 0x0412, // Rummy请求Declare
+  CLI_RUMMY_DROP: 0x0414, // Rummy请求弃整副牌
+  CLI_RUMMY_UPLOAD_GROUPS: 0x0416, // Rummy请求上报牌
+  CLI_RUMMY_GET_DROP_CARDS: 0x0418, // Rummy获取drop牌列表
+  CLI_RUMMY_USER_BACK: 0x041A, // Rummy玩家通报"I am back" 
   
   SVR_HEART_BEAT: 0x0201, // 心跳返回
   SVR_HALL_LOGIN: 0x0203, // 登录大厅返回
@@ -27,8 +38,30 @@ let CommandDef = {
   SVR_ENTER_ROOM: 0x0403, // 返回登录房间信息
   SVR_EXIT_ROOM: 0x0405, // 返回退出房间信息
   SVR_CAST_EXIT_ROOM: 0x1405, // 广播用户退出
+  SVR_REQ_SIT: 0x0407, // 返回请求坐下信息
   SVR_CAST_USER_SIT: 0x1407, // 广播用户坐下
-  SVR_CAST_USER_SIT: 0x1407, // 广播用户坐下
+  SVR_REQ_SWITCH_TABLE: 0x0409, // 请求换桌返回
+  SVR_REQ_STAND: 0x040B, // 请求站起返回
+  SVR_RUMMY_COUNTDOWN: 0x14A1, // 广播游戏开始倒计时
+  SVR_RUMMY_GAME_START: 0x14A2, // 广播游戏开始
+  SVR_RUMMY_USER_TURN: 0x14A3, // 广播轮到玩家
+  SVR_CAST_RUMMY_RESUFFLE: 0x14A4, // 广播重新洗牌
+  SVR_RUMMY_BONUS_TIME: 0x14A5, // 广播玩家bonus time
+  SVR_RUMMY_USER_MISS_TURNS: 0x14A6, // 广播玩家超时次数
+  SVR_RUMMY_DEAL_CARDS: 0x0434, // 游戏发牌
+  SVR_RUMMY_DRAW_CARD: 0x040D, // 请求摸牌返回
+  SVR_CAST_RUMMY_DRAW_CARD: 0x140D, // 广播玩家摸牌
+  SVR_RUMMY_DISCARD_CARD: 0x040E, // 请求出牌返回
+  SVR_CAST_RUMMY_DISCARD: 0x140F, // 广播玩家出牌
+  SVR_RUMMY_FINISH: 0x0411, // 请求Finish返回
+  SVR_CAST_RUMMY_FINISH: 0x1411, // 广播玩家Finish
+  SVR_RUMMY_DECLARE: 0x0413, // 请求Declare返回
+  SVR_CAST_RUMMY_DECLARE: 0x1413, // Rummy广播玩家Declare
+  SVR_RUMMY_DROP: 0x0415, // 请求弃整副牌返回
+  SVR_CAST_RUMMY_DROP: 0x1415, // 广播玩家弃整副牌
+  SVR_RUMMY_UPLOAD_GROUPS: 0x0417, // 请求上报牌返回
+  SVR_RUMMY_GET_DROP_CARDS: 0x0419, // 获取drop牌列表返回
+  SVR_RUMMY_USER_BACK: 0x041B, // 通报"I am back"返回
 }
 
 module.exports = CommandDef
