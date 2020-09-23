@@ -19,7 +19,9 @@ RummyConst.TABLE_STATE_PLAY = 1;
 RummyConst.TABLE_STATE_COUNTDOWN = 2;
 RummyConst.TABLE_STATE_CHOOSE_DEALER = 3;
 
-RummyConst.GAME_START_SECOND = 10;
+RummyConst.GAME_START_SECOND = 3;
+RummyConst.GAME_CHOOSE_D_SECOND = 2; // choose dealer time
+RummyConst.GAME_DEAL_CARDS_SECOND = 2; // choose dealer time
 
 // rummy player
 RummyConst.PLAYER_STATE_OFF = 1; // not in the play
@@ -28,5 +30,6 @@ RummyConst.PLAYER_STATE_PLAY = 3; // in the play and not drop
 
 // rummy game logic
 RummyConst.MAX_SCORE = 80;
+RummyConst.PLAYER_INIT_CARD_NUM = 13;
 
 module.exports = RummyConst;

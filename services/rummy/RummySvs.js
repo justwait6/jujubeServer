@@ -153,4 +153,50 @@ RummySvs.doSendGameStartCountDown = function(uid, time) {
     }})
 }
 
+exports.doCastGameStart = function(tid) {
+    let table = rummySvr.getTable(tid);
+    let retPrePkg = {cmd: CmdDef.SVR_RUMMY_GAME_START};
+    retPrePkg.state = table.getState();
+    retPrePkg.dUid = table.getDealerUid();
+    retPrePkg.smallbet = table.getSmallbet();
+    retPrePkg.players = new Array();
+    let players = table.getPlayers()
+    players.forEach((player) => {
+        if (player.getPlayState() == RummyConst.PLAYER_STATE_PLAY) {
+            let ply = {}
+            ply.uid = player.getUid();
+            ply.money = player.getMoney();
+            ply.card = player.getChooseDCard();
+            ply.minusPoint = RummyConst.MAX_SCORE;
+            ply.minusMoney = BigInt(RummyConst.MAX_SCORE * table.getSmallbet());
+            retPrePkg.players.push(ply);
+        }
+    })
+    console.log("hh", retPrePkg)
+    players.forEach((player) => {
+        if (player.getPlayState() == RummyConst.PLAYER_STATE_PLAY) {
+            eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: player.getUid(), prePkg: retPrePkg});
+        }
+    })
+}
+
+exports.doSendDealCards = function(tid, uid) {
+    let table = rummySvr.getTable(tid);
+    let retPrePkg = {cmd: CmdDef.SVR_RUMMY_DEAL_CARDS};
+    retPrePkg.magicCard = table.getMagicCard();
+    retPrePkg.dropCard = table.getFirstDropCard();
+    retPrePkg.heapCardNum = table.getNewSlotCardNum();
+
+    let player = table.getPlayerByUid(uid)
+    let plyCards = player.getCards();
+    retPrePkg.cards = new Array();
+    plyCards.forEach((sCard) => {
+        retPrePkg.cards.push({card: sCard});
+    });
+
+    console.log(retPrePkg);
+
+    eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: player.getUid(), prePkg: retPrePkg});
+}
+
 module.exports = RummySvs;

@@ -3,13 +3,9 @@ const RummyConst = require("./RummyConst");
 
 var myConf = require('../../config/MyConf');
 const RummyUtil = require("./RumyUtil");
-
-const CmdDef = require(myConf.paths.common + "/protocol/CommandDef");
-const EVENT_NAMES = require(myConf.paths.common + "/event/EventNames");
-const eventMgr = require(myConf.paths.common + "/event/EventMgr");
+const RummySvs = require("../../services/rummy/RummySvs");
 
 let RummyPlayer = require("./RummyPlayer");
-const { Player } = require("./RummyPlayer");
 
 function getRandomInteger(min, max) {
     return Math.floor(Math.random() * (max - min + 1) ) + min;
@@ -43,6 +39,33 @@ class Table {
     }
     getSmallbet() {
         return this.smallbet_ || 0;
+    }
+    setMagicCard(cardUint) {
+        this.magicCard_ = cardUint;
+    }
+    getMagicCard() {
+        return this.magicCard_;
+    }
+    setFirstDropCard(cardUint) {
+        this.firstDropCard_ = cardUint;
+    }
+    getFirstDropCard() {
+        return this.firstDropCard_;
+    }
+    setNewSlotCards(cards) {
+        this.newSlotCards_ = cards;
+    }
+    getNewSlotCards() {
+        return this.newSlotCards_;
+    }
+    getNewSlotCardNum() {
+        return this.newSlotCards_.length;
+    }
+    setOldSlotCards(cards) {
+        this.oldSlotCards_ = cards;
+    }
+    getOldSlotCards() {
+        return this.oldSlotCards_;
     }
     setGameStartCountDown(time) {
         this.gameStartCountDown_ = time;
@@ -113,7 +136,6 @@ class Table {
         let player = new RummyPlayer.Player(uid, userinfo);
         player.setPlayState(RummyConst.PLAYER_STATE_OFF);
         let seatId = this.randomGetIdleSeatId();
-        console.log("allocated seatid: ", seatId)
         player.setSeatId(seatId);
         this.insertPlayer(player);
     }
@@ -147,6 +169,7 @@ class Table {
             }
         }, 1000);
         this.countDownDelayId_ = setTimeout(() => {
+            clearTimeout(this.countDownDelayId_);
             clearInterval(this.countDownLoopId_);
             this.doGameStart();
         }, (RummyConst.GAME_START_SECOND) * 1000);
@@ -175,8 +198,7 @@ class Table {
     doGameStart() {
         // 选庄家
         this.setState(RummyConst.TABLE_STATE_CHOOSE_DEALER)
-
-        console.log("doGameStart, todo..");
+        
         let playerNum = this.getPlayers().length;
         let cards = RummyUtil.getChooseDealerCards(playerNum);
         let maxCard = RummyUtil.getMaxCard(cards);
@@ -184,7 +206,8 @@ class Table {
         for (let i = 0; i < playerNum; i++) {
             let money = this.players_[i].getMoney() - BigInt(RummyConst.MAX_SCORE * smallbet);
             this.players_[i].setMoney(money) // minus smallbet
-            console.log(cards[i])
+            this.players_[i].setPlayState(RummyConst.PLAYER_STATE_PLAY) // set player play state
+            this.players_[i].setChooseDCard(cards[i]) // set player play state
             if (maxCard == cards[i]) {
                 if (i < playerNum - 1) {
                     this.setDealerUid(this.players_[i + 1].getUid());
@@ -194,24 +217,52 @@ class Table {
                 
             }
         }
-        let retPrePkg = {cmd: CmdDef.SVR_RUMMY_GAME_START}
-        retPrePkg.state = this.getState();
-        retPrePkg.dUid = this.getDealerUid();
-        retPrePkg.smallbet = this.getSmallbet();
-        retPrePkg.players = new Array();
-        for (let i = 0; i < playerNum; i++) {
-            let player = {}
-            player.uid = this.players_[i].getUid();
-            player.money = this.players_[i].getMoney();
-            player.card = cards[i];
-            player.minusPoint = RummyConst.MAX_SCORE;
-            player.minusMoney = BigInt(RummyConst.MAX_SCORE * smallbet);
-            retPrePkg.players.push(player);
-        }
+        RummySvs.doCastGameStart(this.getTid());
+
+        // choose dealer anim time
+        this.chooseDealerDelayId_ = setTimeout(() => {
+            clearTimeout(this.chooseDealerDelayId_);
+            this.doDealCards();
+        }, (RummyConst.GAME_CHOOSE_D_SECOND) * 1000);
+        
+    }
+
+    doDealCards() {
+        console.log("todo...")
+        let cards = RummyUtil.createInitCards();
+        cards = RummyUtil.shuffleCards(cards);
+
+        this.setMagicCard(cards.splice(0, 1)[0]);
+        this.setFirstDropCard(cards.splice(0, 1)[0]);
+        this.players_.forEach((player) => {
+            if (player.getPlayState() == RummyConst.PLAYER_STATE_PLAY) {
+                player.setCards(cards.splice(0, RummyConst.PLAYER_INIT_CARD_NUM));
+            }
+        });
+
+        this.setNewSlotCards(cards);
+        console.log(cards)
+        console.log(cards)
+        console.log(this.getNewSlotCardNum())
+        let oldCards = new Array();
+        oldCards.push(this.getFirstDropCard());
+        this.setOldSlotCards(oldCards);
 
         this.players_.forEach((player) => {
-            eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: player.getUid(), prePkg: retPrePkg});
-        })
+            if (player.getPlayState() == RummyConst.PLAYER_STATE_PLAY) {
+                RummySvs.doSendDealCards(this.getTid(), player.getUid());
+            }
+        });
+
+        // deal cards anim time
+        this.dealCardsDelayId_ = setTimeout(() => {
+            clearTimeout(this.dealCardsDelayId_);
+            this.doCheckUserTurn();
+        }, (RummyConst.GAME_DEAL_CARDS_SECOND) * 1000);
+    }
+
+    doCheckUserTurn() {
+
     }
 }
 RummyTable.Table = Table;

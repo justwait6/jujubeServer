@@ -206,7 +206,20 @@ let CommandConfig = { // Rummy Server, 只有一个协议
         ]
       },
     ]
-  }
+  },
+  [CmdDef.SVR_RUMMY_DEAL_CARDS]: {
+    ver: 1,
+    fmt: [
+      {name: "magicCard", type: T.BYTE},
+      {name: "dropCard", type: T.BYTE},
+      {name: "heapCardNum", type: T.INT},
+      {name: "cards", type: T.ARRAY, lengthType: T.BYTE,
+        fmt: [
+          {name: "card", type: T.BYTE},
+        ]
+      },
+    ]
+  },
 }
 
 module.exports = CommandConfig

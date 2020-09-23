@@ -1,5 +1,4 @@
 var myConf = require('../../config/MyConf');
-const { doCliEnterRoom } = require('../../services/rummy/RummySvs');
 const CardsDef = require(myConf.paths.model + '/cards/CardsDef');
 
 let RummyUtil = {};

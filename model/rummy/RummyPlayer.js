@@ -53,12 +53,20 @@ class Player {
         return this.userinfo_ || "";
     }
 
-    setChooseDealerCard(card) {
-        this.chooseDealerCard_ = card
+    setChooseDCard(cardUinit) {
+        this.chooseDCard_ = cardUinit;
     }
 
-    getChooseDealerCard() {
-        return this.chooseDealerCard_
+    getChooseDCard() {
+        return this.chooseDCard_;
+    }
+
+    setCards(cards) {
+        this.mCards_ = cards
+    }
+
+    getCards() {
+        return this.mCards_
     }
 }
 
