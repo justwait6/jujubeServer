@@ -52,6 +52,14 @@ class Player {
     getUserinfo() {
         return this.userinfo_ || "";
     }
+
+    setChooseDealerCard(card) {
+        this.chooseDealerCard_ = card
+    }
+
+    getChooseDealerCard() {
+        return this.chooseDealerCard_
+    }
 }
 
 RummyPlayer.Player = Player;

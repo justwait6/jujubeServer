@@ -190,6 +190,23 @@ let CommandConfig = { // Rummy Server, 只有一个协议
       {name: "leftSec", type: T.BYTE},
     ]
   },
+  [CmdDef.SVR_RUMMY_GAME_START]: {
+    ver: 1,
+    fmt: [
+      {name: "state", type: T.INT},
+      {name: "dUid", type: T.INT},
+      {name: "smallbet", type: T.INT},
+      {name: "players", type: T.ARRAY, lengthType: T.BYTE,
+        fmt: [
+          {name: "uid", type: T.INT},
+          {name: "money", type: T.LONG},
+          {name: "card", type: T.BYTE},
+          {name: "minusPoint", type: T.INT},
+          {name: "minusMoney", type: T.LONG},
+        ]
+      },
+    ]
+  }
 }
 
 module.exports = CommandConfig

@@ -57,7 +57,7 @@ RummySvs.doCliEnterRoom = function(parsedPkg) {
             });
         }
     } else if (tState == RummyConst.TABLE_STATE_COUNTDOWN) {
-        RummySvs.doSendGameStartCountDown(uid, table.getGameStartCountDown());
+        RummySvs.doSendGameStartCountDown(parsedPkg.uid, table.getGameStartCountDown());
     }
 }
 

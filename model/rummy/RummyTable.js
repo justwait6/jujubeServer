@@ -1,7 +1,15 @@
 let RummyTable = {};
 const RummyConst = require("./RummyConst");
 
-let RummyPlayer = require("./RummyPlayer")
+var myConf = require('../../config/MyConf');
+const RummyUtil = require("./RumyUtil");
+
+const CmdDef = require(myConf.paths.common + "/protocol/CommandDef");
+const EVENT_NAMES = require(myConf.paths.common + "/event/EventNames");
+const eventMgr = require(myConf.paths.common + "/event/EventMgr");
+
+let RummyPlayer = require("./RummyPlayer");
+const { Player } = require("./RummyPlayer");
 
 function getRandomInteger(min, max) {
     return Math.floor(Math.random() * (max - min + 1) ) + min;
@@ -165,7 +173,45 @@ class Table {
     }
 
     doGameStart() {
+        // 选庄家
+        this.setState(RummyConst.TABLE_STATE_CHOOSE_DEALER)
+
         console.log("doGameStart, todo..");
+        let playerNum = this.getPlayers().length;
+        let cards = RummyUtil.getChooseDealerCards(playerNum);
+        let maxCard = RummyUtil.getMaxCard(cards);
+        let smallbet = this.getSmallbet();
+        for (let i = 0; i < playerNum; i++) {
+            let money = this.players_[i].getMoney() - BigInt(RummyConst.MAX_SCORE * smallbet);
+            this.players_[i].setMoney(money) // minus smallbet
+            console.log(cards[i])
+            if (maxCard == cards[i]) {
+                if (i < playerNum - 1) {
+                    this.setDealerUid(this.players_[i + 1].getUid());
+                } else {
+                    this.setDealerUid(this.players_[0].getUid());
+                }
+                
+            }
+        }
+        let retPrePkg = {cmd: CmdDef.SVR_RUMMY_GAME_START}
+        retPrePkg.state = this.getState();
+        retPrePkg.dUid = this.getDealerUid();
+        retPrePkg.smallbet = this.getSmallbet();
+        retPrePkg.players = new Array();
+        for (let i = 0; i < playerNum; i++) {
+            let player = {}
+            player.uid = this.players_[i].getUid();
+            player.money = this.players_[i].getMoney();
+            player.card = cards[i];
+            player.minusPoint = RummyConst.MAX_SCORE;
+            player.minusMoney = BigInt(RummyConst.MAX_SCORE * smallbet);
+            retPrePkg.players.push(player);
+        }
+
+        this.players_.forEach((player) => {
+            eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: player.getUid(), prePkg: retPrePkg});
+        })
     }
 }
 RummyTable.Table = Table;
