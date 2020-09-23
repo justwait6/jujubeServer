@@ -36,6 +36,12 @@ class Table {
     getSmallbet() {
         return this.smallbet_ || 0;
     }
+    setGameStartCountDown(time) {
+        this.gameStartCountDown_ = time;
+    }
+    getGameStartCountDown() {
+        return this.gameStartCountDown_
+    }
     setDealerUid(uid) {
         this.dUid_ = uid;
     }
@@ -75,8 +81,8 @@ class Table {
             }
         }
     }
+
     randomGetIdleSeatId() {
-        console.log("hhhhh", this.players_.length)
         if (this.players_.length >= RummyConst.MAX_TABLE_PLAYERS) {
             return -1;
         }
@@ -115,6 +121,51 @@ class Table {
             exitParams.gold = player.getGold();
         }
         return exitParams;
+    }
+
+    doGameReady() {
+        let tState = this.getState();
+        let playerNum = this.getPlayers().length;
+        let isOk = (tState == RummyConst.TABLE_STATE_NOT_PLAY && playerNum >= 2);
+        if (!isOk) {
+            return false;
+        }
+        let leftTime = RummyConst.GAME_START_SECOND;
+        this.setGameStartCountDown(leftTime);
+        this.countDownLoopId_ = setInterval(() => {
+            leftTime = leftTime - 1;
+            if (leftTime >= 0) {
+                this.setGameStartCountDown(leftTime);
+            }
+        }, 1000);
+        this.countDownDelayId_ = setTimeout(() => {
+            clearInterval(this.countDownLoopId_);
+            this.doGameStart();
+        }, (RummyConst.GAME_START_SECOND) * 1000);
+
+        this.setState(RummyConst.TABLE_STATE_COUNTDOWN);
+
+        return true;
+    }
+
+    checkCancelGameReady() {
+        let tState = this.getState();
+        let playerNum = this.getPlayers().length;
+        if (tState == RummyConst.TABLE_STATE_COUNTDOWN && playerNum <= 1) {
+            this.cancelGameReady_()
+            return true;
+        }
+        return false;
+    }
+
+    cancelGameReady_() {
+        clearTimeout(this.countDownDelayId_);
+        clearInterval(this.countDownLoopId_);
+        this.setState(RummyConst.TABLE_STATE_NOT_PLAY);
+    }
+
+    doGameStart() {
+        console.log("doGameStart, todo..");
     }
 }
 RummyTable.Table = Table;

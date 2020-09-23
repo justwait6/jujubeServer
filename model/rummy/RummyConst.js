@@ -15,7 +15,10 @@ RummyConst.TABLE_LEVEL_MID = 2;
 RummyConst.TABLE_LEVEL_BIG = 3;
 
 RummyConst.TABLE_STATE_NOT_PLAY = 0;
-RummyConst.TABLE_STATE_PLAY = 1;
+RummyConst.TABLE_STATE_COUNTDOWN = 1;
+RummyConst.TABLE_STATE_PLAY = 2;
+
+RummyConst.GAME_START_SECOND = 10;
 
 // rummy player
 RummyConst.PLAYER_STATE_OFF = 1; // not in the play

@@ -184,6 +184,12 @@ let CommandConfig = { // Rummy Server, 只有一个协议
       {name: "state",type: T.INT},
     ]
   },
+  [CmdDef.SVR_RUMMY_COUNTDOWN]: {
+    ver: 1,
+    fmt: [
+      {name: "leftSec", type: T.BYTE},
+    ]
+  },
 }
 
 module.exports = CommandConfig
