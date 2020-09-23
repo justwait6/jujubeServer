@@ -62,13 +62,12 @@ RummySvs.doCliEnterRoom = function(parsedPkg) {
 }
 
 RummySvs.doCliExitRoom = function(parsedPkg) {
-    let table = rummySvr.getTable(parsedPkg.tid);
+    let table = rummySvr.getTable(parsedPkg.tid);    
+    let exitParams = table.doPlayerExit(parsedPkg.uid, parsedPkg.userinfo);
     let tState = table.getState();
     if (tState == RummyConst.TABLE_STATE_COUNTDOWN) {
         table.checkCancelGameReady();
     }
-    
-    let exitParams = table.doPlayerExit(parsedPkg.uid, parsedPkg.userinfo);
     RummySvs.doSendUserExit(parsedPkg.uid, exitParams);
     if (exitParams.ret == 0) {
         RummySvs.doCastUserExit(parsedPkg.tid, parsedPkg.uid);
