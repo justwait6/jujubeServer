@@ -199,4 +199,13 @@ exports.doSendDealCards = function(tid, uid) {
     eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: player.getUid(), prePkg: retPrePkg});
 }
 
+exports.doCastUserTurn = function(tid, uid, time) {
+    let table = rummySvr.getTable(tid);
+    let retPrePkg = {cmd: CmdDef.SVR_RUMMY_USER_TURN, uid: uid, time: time}
+    let players = table.getPlayers();
+    players.forEach((player) => {
+        eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: player.getUid(), prePkg: retPrePkg});
+    })
+}
+
 module.exports = RummySvs;

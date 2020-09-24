@@ -220,6 +220,13 @@ let CommandConfig = { // Rummy Server, 只有一个协议
       },
     ]
   },
+  [CmdDef.SVR_RUMMY_USER_TURN]: {
+    ver: 1,
+    fmt: [
+      {name: "uid", type: T.INT},
+      {name: "time", type: T.INT},
+    ]
+  },
 }
 
 module.exports = CommandConfig

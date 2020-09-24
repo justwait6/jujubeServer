@@ -6,6 +6,7 @@ const RummyUtil = require("./RumyUtil");
 const RummySvs = require("../../services/rummy/RummySvs");
 
 let RummyPlayer = require("./RummyPlayer");
+const { Player } = require("./RummyPlayer");
 
 function getRandomInteger(min, max) {
     return Math.floor(Math.random() * (max - min + 1) ) + min;
@@ -79,6 +80,12 @@ class Table {
     getDealerUid() {
         return this.dUid_ || -1;
     }
+    setLastOpSeatId(seatId) {
+        this.lastOpSeatId_ = seatId;
+    }
+    getLastOpSeatId() {
+        return this.lastOpSeatId_;
+    }
     getPlayers() {
         return this.players_ || [];
     }
@@ -94,16 +101,17 @@ class Table {
     insertPlayer(player) {
         if (!this.isPlayerExist(player.getUid())) {
             this.players_.push(player);
+            return true;
         }
+        return false;
     }
     deletePlayerByUid(uid) {
-        let player = null;
         for (let i = 0; i < this.players_.length; i++) {
             if (this.players_[i].getUid() == uid) {
-                player = this.players_.splice(i, 1)[0];
+                return this.players_.splice(i, 1)[0];
             }
         }
-        return player;
+        return null;
     }
     getPlayerByUid(uid) {
         for (let i = 0; i < this.players_.length; i++) {
@@ -111,17 +119,27 @@ class Table {
                 return this.players_[i];
             }
         }
+        return null;
     }
-
-    randomGetIdleSeatId() {
-        if (this.players_.length >= RummyConst.MAX_TABLE_PLAYERS) {
-            return -1;
+    getPlayerBySeatId(seatId) {
+        for (let i = 0; i < this.players_.length; i++) {
+            if (this.players_[i].getSeatId() == seatId) {
+                return this.players_[i];
+            }
         }
-        let usedSeats = new Array();
-        this.players_.forEach(player => {
-            usedSeats.push(player.getSeatId());
+        return null;
+    }
+    getPlayerSeats() {
+        let pSeats = new Array();
+        this.getPlayers().forEach(player => {
+            pSeats.push(player.getSeatId());
         });
-        usedSeats.sort((a, b) => a - b);
+        return pSeats;
+    }
+    randomGetIdleSeatId(usedSeats) {
+        if (usedSeats.length >= RummyConst.MAX_TABLE_PLAYERS) {
+            return -1;
+        }        
         let idleSeats = new Array();
         for (i = 0; i < RummyConst.MAX_TABLE_PLAYERS; i++) {
             if (!usedSeats.includes(i)) {
@@ -135,7 +153,10 @@ class Table {
     doPlayerLogin(uid, userinfo) {
         let player = new RummyPlayer.Player(uid, userinfo);
         player.setPlayState(RummyConst.PLAYER_STATE_OFF);
-        let seatId = this.randomGetIdleSeatId();
+        
+        let pSeats = this.getPlayerSeats();
+        pSeats.sort();
+        let seatId = this.randomGetIdleSeatId(pSeats);
         player.setSeatId(seatId);
         this.insertPlayer(player);
     }
@@ -197,24 +218,24 @@ class Table {
 
     doGameStart() {
         // 选庄家
-        this.setState(RummyConst.TABLE_STATE_CHOOSE_DEALER)
+        this.setState(RummyConst.TABLE_STATE_CHOOSE_DEALER);
         
-        let playerNum = this.getPlayers().length;
-        let cards = RummyUtil.getChooseDealerCards(playerNum);
+        let playerSeats = this.getPlayerSeats();
+        playerSeats.sort();
+        let cards = RummyUtil.getChooseDealerCards(playerSeats.length);
         let maxCard = RummyUtil.getMaxCard(cards);
         let smallbet = this.getSmallbet();
-        for (let i = 0; i < playerNum; i++) {
-            let money = this.players_[i].getMoney() - BigInt(RummyConst.MAX_SCORE * smallbet);
-            this.players_[i].setMoney(money) // minus smallbet
-            this.players_[i].setPlayState(RummyConst.PLAYER_STATE_PLAY) // set player play state
-            this.players_[i].setChooseDCard(cards[i]) // set player play state
+        for (let i = 0; i < playerSeats.length; i++) { // 选庄家顺时针
+            let player = this.getPlayerBySeatId(playerSeats[i]);
+            let money = player.getMoney() - BigInt(RummyConst.MAX_SCORE * smallbet);
+            player.setMoney(money) // minus smallbet
+            player.setPlayState(RummyConst.PLAYER_STATE_PLAY)
+            player.setChooseDCard(cards[i])
             if (maxCard == cards[i]) {
-                if (i < playerNum - 1) {
-                    this.setDealerUid(this.players_[i + 1].getUid());
-                } else {
-                    this.setDealerUid(this.players_[0].getUid());
-                }
-                
+                let nextSeatId = (i < playerSeats.length - 1) ? playerSeats[i + 1] : playerSeats[0];
+                let dealer = this.getPlayerBySeatId(nextSeatId);
+                this.setDealerUid(dealer.getUid());
+                this.setLastOpSeatId(dealer.getSeatId()); // initialize, suppose last op user being dealer.
             }
         }
         RummySvs.doCastGameStart(this.getTid());
@@ -228,7 +249,6 @@ class Table {
     }
 
     doDealCards() {
-        console.log("todo...")
         let cards = RummyUtil.createInitCards();
         cards = RummyUtil.shuffleCards(cards);
 
@@ -262,7 +282,25 @@ class Table {
     }
 
     doCheckUserTurn() {
+        let playerSeats = this.getPlayerSeats();
+        playerSeats.sort();
+        // find current user, counterclock
+        let opUid = -1;
+        let idx = playerSeats.indexOf(this.getLastOpSeatId());
+        for (let i = 0; i < playerSeats.length; i++) {
+            idx = (idx > 0) ? (idx - 1) : (playerSeats.length - 1);
+            let nextPlayer = this.getPlayerBySeatId(playerSeats[idx]);
+            if ((nextPlayer) && (nextPlayer.getPlayState() == RummyConst.PLAYER_STATE_PLAY)) {
+                opUid = nextPlayer.getUid();
+                this.setLastOpSeatId(nextPlayer.getSeatId());
+                break;
+            }
+        }
 
+        // broadcast current user turn
+        if (opUid != -1) {
+            RummySvs.doCastUserTurn(this.getTid(), opUid, RummyConst.PLAYER_OP_SECOND);
+        }
     }
 }
 RummyTable.Table = Table;
