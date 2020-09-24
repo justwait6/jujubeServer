@@ -19,6 +19,13 @@ RummyConst.TABLE_STATE_PLAY = 1;
 RummyConst.TABLE_STATE_COUNTDOWN = 2;
 RummyConst.TABLE_STATE_CHOOSE_DEALER = 3;
 
+RummyConst.OP_NO_STAGE = 0;
+RummyConst.OP_STAGE_DRAW = 1;
+RummyConst.OP_STAGE_DISCARD = 2;
+RummyConst.OP_STAGE_FINISH = 3;
+RummyConst.OP_STAGE_MONO_DECLARE = 4;
+RummyConst.OP_STAGE_LEFT_DECLARE = 5;
+
 RummyConst.GAME_START_SECOND = 3;
 RummyConst.GAME_CHOOSE_D_SECOND = 2; // choose dealer time
 RummyConst.GAME_DEAL_CARDS_SECOND = 2; // choose dealer time

@@ -6,7 +6,6 @@ const RummyUtil = require("./RumyUtil");
 const RummySvs = require("../../services/rummy/RummySvs");
 
 let RummyPlayer = require("./RummyPlayer");
-const { Player } = require("./RummyPlayer");
 
 function getRandomInteger(min, max) {
     return Math.floor(Math.random() * (max - min + 1) ) + min;
@@ -68,6 +67,26 @@ class Table {
     getOldSlotCards() {
         return this.oldSlotCards_;
     }
+    drawSingleCard_(region) {
+        let card = -1;
+        if (region == 0) { // draw from new card area
+            let cardNum = this.getNewSlotCards().length;
+            card = (cardNum <= 0) ? -1 : this.newSlotCards_.splice(0, 1)[0];
+        } else if (region == 1) { // draw from old area
+            let cardNum = this.getOldSlotCards().length;
+            card = (cardNum <= 0) ? -1 : this.oldSlotCards_.splice(this.oldSlotCards_.length - 1, 1)[0];
+        }
+
+        if (region == 1 && card != -1) { // update first drop card if fetch from old region.
+            let fCard = (this.oldSlotCards_.length <= 0) ? -1 : this.oldSlotCards_[this.oldSlotCards_.length - 1];
+            this.setFirstDropCard(fCard);
+        }
+        return card;
+    }
+    cardToOldSlot_(card) {
+        this.oldSlotCards_.push(card);
+        this.setFirstDropCard(card);
+    }
     setGameStartCountDown(time) {
         this.gameStartCountDown_ = time;
     }
@@ -85,6 +104,12 @@ class Table {
     }
     getLastOpSeatId() {
         return this.lastOpSeatId_;
+    }
+    setOpStage(stage) {
+        this.opStage_ = stage;
+    }
+    getOpStage(stage) {
+        return this.opStage_;
     }
     getPlayers() {
         return this.players_ || [];
@@ -159,6 +184,7 @@ class Table {
         let seatId = this.randomGetIdleSeatId(pSeats);
         player.setSeatId(seatId);
         this.insertPlayer(player);
+        return 0;
     }
 
     doPlayerExit(uid) {
@@ -196,6 +222,7 @@ class Table {
         }, (RummyConst.GAME_START_SECOND) * 1000);
 
         this.setState(RummyConst.TABLE_STATE_COUNTDOWN);
+        this.setOpStage(RummyConst.OP_NO_STAGE);
 
         return true;
     }
@@ -261,9 +288,6 @@ class Table {
         });
 
         this.setNewSlotCards(cards);
-        console.log(cards)
-        console.log(cards)
-        console.log(this.getNewSlotCardNum())
         let oldCards = new Array();
         oldCards.push(this.getFirstDropCard());
         this.setOldSlotCards(oldCards);
@@ -282,6 +306,8 @@ class Table {
     }
 
     doCheckUserTurn() {
+        this.setOpStage(RummyConst.OP_STAGE_DRAW);
+
         let playerSeats = this.getPlayerSeats();
         playerSeats.sort();
         // find current user, counterclock
@@ -301,6 +327,64 @@ class Table {
         if (opUid != -1) {
             RummySvs.doCastUserTurn(this.getTid(), opUid, RummyConst.PLAYER_OP_SECOND);
         }
+
+        // deal cards anim time
+        this.userTurnDelayId_ = setTimeout(() => {
+            clearTimeout(this.userTurnDelayId_);
+            this.doUserTurnTimeout();
+        }, (RummyConst.PLAYER_OP_SECOND) * 1000);
+    }
+
+    doUserTurnTimeout() {
+        console.log("todo, user turn timeout...")
+    }
+
+    doPlayerDraw(uid, region) {
+        let retParams = {ret: 1};
+        let player = this.getPlayerByUid(uid);
+        if (this.getLastOpSeatId() != player.getSeatId()) { // not user's turn
+            return retParams;
+        }
+        if (this.getOpStage() != RummyConst.OP_STAGE_DRAW) { // not in draw card stage
+            retParams.ret = 2;
+            return retParams;
+        }
+        let drawCard = this.drawSingleCard_(region);
+        if (drawCard == -1) {
+            retParams.ret = 3;
+            return retParams;
+        }   
+        player.insertCard(drawCard);
+        this.setOpStage(RummyConst.OP_STAGE_DISCARD);
+
+        retParams.ret = 0;
+        retParams.tid = this.getTid();
+        retParams.region = region;
+        retParams.dropCard = this.getFirstDropCard();
+        retParams.card = drawCard;
+        retParams.heapCardNum = this.getNewSlotCardNum();
+        return retParams;
+    }
+
+    doPlayerDiscard(uid, discardCard) {
+        let retParams = {ret: 1};
+        let player = this.getPlayerByUid(uid);
+        if (this.getLastOpSeatId() != player.getSeatId()) { // not user's turn
+            return retParams;
+        }
+        if (this.getOpStage() != RummyConst.OP_STAGE_DISCARD) { // not in discard card stage
+            retParams.ret = 2;
+            return retParams;
+        }
+        let ret = player.deleteCard(discardCard);
+        if (ret == -1) { // not find card in player cards
+            retParams.ret = 3;
+            return retParams;
+        }
+        this.cardToOldSlot_(discardCard);
+        retParams.ret = 0;
+        retParams.tid = this.getTid();
+        return retParams
     }
 }
 RummyTable.Table = Table;

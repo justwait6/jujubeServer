@@ -51,7 +51,7 @@ let CommandDef = {
   SVR_RUMMY_DEAL_CARDS: 0x0434, // 游戏发牌
   SVR_RUMMY_DRAW_CARD: 0x040D, // 请求摸牌返回
   SVR_CAST_RUMMY_DRAW_CARD: 0x140D, // 广播玩家摸牌
-  SVR_RUMMY_DISCARD_CARD: 0x040E, // 请求出牌返回
+  SVR_RUMMY_DISCARD_CARD: 0x040F, // 请求出牌返回
   SVR_CAST_RUMMY_DISCARD: 0x140F, // 广播玩家出牌
   SVR_RUMMY_FINISH: 0x0411, // 请求Finish返回
   SVR_CAST_RUMMY_FINISH: 0x1411, // 广播玩家Finish

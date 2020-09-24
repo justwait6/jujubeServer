@@ -58,6 +58,21 @@ let CommandConfig = { // Rummy Server, 只有一个协议
       {name: "tid", type: T.INT},
     ]
   },
+  [CmdDef.CLI_RUMMY_DRAW_CARD]: {
+    ver: 1,
+    fmt: [
+      {name: "uid", type: T.INT},
+      {name: "region", type: T.BYTE},
+    ]
+  },
+  [CmdDef.CLI_RUMMY_DISCARD_CARD]: {
+    ver: 1,
+    fmt: [
+      {name: "uid", type: T.INT},
+      {name: "card", type: T.BYTE},
+      {name: "index", type: T.INT},
+    ]
+  },
   
 
   [CmdDef.SVR_HEART_BEAT]: {
@@ -225,6 +240,40 @@ let CommandConfig = { // Rummy Server, 只有一个协议
     fmt: [
       {name: "uid", type: T.INT},
       {name: "time", type: T.INT},
+    ]
+  },
+  [CmdDef.SVR_RUMMY_DRAW_CARD]: {
+    ver: 1,
+    fmt: [
+      {name: "ret", type: T.BYTE},
+      {name: "region", type: T.BYTE, depends: function(ctx){ return ctx.ret == 0; } },
+      {name: "dropCard", type: T.BYTE, depends: function(ctx){ return ctx.ret == 0; } },
+      {name: "card", type: T.BYTE, depends: function(ctx){ return ctx.ret == 0; } },
+      {name: "heapCardNum", type: T.INT, depends: function(ctx){ return ctx.ret == 0; } },
+    ]
+  },
+  [CmdDef.SVR_CAST_RUMMY_DRAW_CARD]: {
+    ver: 1,
+    fmt: [
+      {name: "uid", type: T.INT},
+      {name: "region", type: T.BYTE},
+      {name: "dropCard", type: T.BYTE},
+      {name: "heapCardNum", type: T.INT},
+    ]
+  },
+  [CmdDef.SVR_RUMMY_DISCARD_CARD]: {
+    ver: 1,
+    fmt: [
+      {name: "ret", type: T.BYTE},
+      {name: "dropCard", type: T.BYTE, depends: function(ctx){ return ctx.ret == 0; } },
+      {name: "index", type: T.INT, depends: function(ctx){ return ctx.ret == 0; } },
+    ]
+  },
+  [CmdDef.SVR_CAST_RUMMY_DISCARD]: {
+    ver: 1,
+    fmt: [
+      {name: "uid", type: T.INT},
+      {name: "dropCard", type: T.BYTE},
     ]
   },
 }

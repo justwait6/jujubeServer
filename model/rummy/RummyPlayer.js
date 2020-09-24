@@ -68,6 +68,16 @@ class Player {
     getCards() {
         return this.mCards_
     }
+    insertCard(card) {
+        this.mCards_.push(card);
+    }
+    deleteCard(card) {
+        let idx = this.mCards_.indexOf(card);
+        if (idx == -1) {
+            return -1;
+        }
+        this.mCards_.splice(idx, 1);
+    }
 }
 
 RummyPlayer.Player = Player;

@@ -1,8 +1,10 @@
 let RummySvs = {};
 var self = RummySvs;
 
+const PkgDataType = require('../../common/socket/PkgDataType');
 var myConf = require('../../config/MyConf');
 const RummyConst = require('../../model/rummy/RummyConst');
+const { Player } = require('../../model/rummy/RummyPlayer');
 var rummySvr = require(myConf.paths.model + '/rummy/RummySvr');
 
 const CmdDef = require(myConf.paths.common + "/protocol/CommandDef");
@@ -16,16 +18,20 @@ RummySvs.start = function() {
 
 RummySvs.onPackageReceived = function(parsedPkg) {
     if (parsedPkg.cmd == CmdDef.CLI_GET_TABLE) {
-        self.doCliGetTable(parsedPkg)
+        self.doCliGetTable(parsedPkg);
     } else if (parsedPkg.cmd == CmdDef.CLI_ENTER_ROOM) {
-        self.doCliEnterRoom(parsedPkg)
+        self.doCliEnterRoom(parsedPkg);
     } else if (parsedPkg.cmd == CmdDef.CLI_EXIT_ROOM) {
-        self.doCliExitRoom(parsedPkg)
+        self.doCliExitRoom(parsedPkg);
+    } else if (parsedPkg.cmd == CmdDef.CLI_RUMMY_DRAW_CARD) {
+        self.doCliDraw(parsedPkg);
+    } else if (parsedPkg.cmd == CmdDef.CLI_RUMMY_DISCARD_CARD) {
+        self.doCliDiscard(parsedPkg);
     }
 }
 
 RummySvs.doCliGetTable = function(parsedPkg) {
-    let tableId = rummySvr.fetchOptTableId(parsedPkg.gameId, parsedPkg.level);
+    let tableId = rummySvr.fetchOptTableId(parsedPkg.uid, parsedPkg.gameId, parsedPkg.level);
 
     eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: parsedPkg.uid, prePkg: {
         cmd: CmdDef.SVR_GET_TABLE,
@@ -38,13 +44,16 @@ RummySvs.doCliGetTable = function(parsedPkg) {
 
 RummySvs.doCliEnterRoom = function(parsedPkg) {
     let table = rummySvr.getTable(parsedPkg.tid);
-    table.doPlayerLogin(parsedPkg.uid, parsedPkg.userinfo);
+    let ret = table.doPlayerLogin(parsedPkg.uid, parsedPkg.userinfo);
+    if (ret == 0) {
+        rummySvr.insertUidTid(parsedPkg.uid, parsedPkg.tid);
+    }
 
     // 登录返回
-    RummySvs.doSendEnterRoom(parsedPkg.uid, table);
+    self.doSendEnterRoom(parsedPkg.uid, table);
 
     // 广播用户坐下
-    RummySvs.doCastSitDown(parsedPkg.tid, parsedPkg.uid)
+    self.doCastSitDown(parsedPkg.tid, parsedPkg.uid)
 
     // 桌子状态
     let tState = table.getState();
@@ -53,24 +62,55 @@ RummySvs.doCliEnterRoom = function(parsedPkg) {
             let players = table.getPlayers();
             let time = table.getGameStartCountDown();
             players.forEach((player) => {
-                RummySvs.doSendGameStartCountDown(player.getUid(), time);
+                self.doSendGameStartCountDown(player.getUid(), time);
             });
         }
     } else if (tState == RummyConst.TABLE_STATE_COUNTDOWN) {
-        RummySvs.doSendGameStartCountDown(parsedPkg.uid, table.getGameStartCountDown());
+        self.doSendGameStartCountDown(parsedPkg.uid, table.getGameStartCountDown());
     }
 }
 
 RummySvs.doCliExitRoom = function(parsedPkg) {
     let table = rummySvr.getTable(parsedPkg.tid);    
-    let exitParams = table.doPlayerExit(parsedPkg.uid, parsedPkg.userinfo);
+    let retParams = table.doPlayerExit(parsedPkg.uid, parsedPkg.userinfo);
     let tState = table.getState();
     if (tState == RummyConst.TABLE_STATE_COUNTDOWN) {
         table.checkCancelGameReady();
     }
-    RummySvs.doSendUserExit(parsedPkg.uid, exitParams);
-    if (exitParams.ret == 0) {
-        RummySvs.doCastUserExit(parsedPkg.tid, parsedPkg.uid);
+    self.doSendUserExit(parsedPkg.uid, retParams);
+    if (retParams.ret == 0) {
+        self.doCastUserExit(parsedPkg.tid, parsedPkg.uid);
+        rummySvr.deleteUidTid(parsedPkg.uid, parsedPkg.tid);
+    }
+}
+
+RummySvs.doCliDraw = function(parsedPkg) {
+    let table = rummySvr.queryTableByUid(parsedPkg.uid);
+    if (!table) {
+        console.log("no table found!")
+        return;
+    }
+    let retParams = table.doPlayerDraw(parsedPkg.uid, parsedPkg.region);
+
+    self.doSendDraw(parsedPkg.uid, retParams);
+    if (retParams.ret == 0) {
+        self.doCastDraw(parsedPkg.uid, retParams);
+    }
+}
+
+RummySvs.doCliDiscard = function(parsedPkg) {
+    let table = rummySvr.queryTableByUid(parsedPkg.uid);
+    if (!table) {
+        console.log("no table found!")
+        return;
+    }
+    let retParams = table.doPlayerDiscard(parsedPkg.uid, parsedPkg.card);
+    retParams.dropCard = parsedPkg.card
+    retParams.cliIndex = parsedPkg.index
+
+    self.doSendDiscard(parsedPkg.uid, retParams);
+    if (retParams.ret == 0) {
+        self.doCastDiscard(parsedPkg.uid, retParams);
     }
 }
 
@@ -94,7 +134,6 @@ RummySvs.doSendEnterRoom = function(sendUid, table) {
         retPrePkg.players.push(player);
     }
     retPrePkg.ret = 0;
-    console.log(retPrePkg)
     eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: sendUid, prePkg: retPrePkg});
 }
 
@@ -119,14 +158,14 @@ RummySvs.doCastSitDown = function(tid, uid) {
     })
 }
 
-RummySvs.doSendUserExit = function(sendUid, exitParams) {
+RummySvs.doSendUserExit = function(sendUid, retParams) {
     let retPrePkg = {
         cmd: CmdDef.SVR_EXIT_ROOM,
-        ret: exitParams.ret,
+        ret: retParams.ret,
     }
-    if (exitParams.ret == 0) {
-        retPrePkg.money = exitParams.money
-        retPrePkg.gold = exitParams.gold
+    if (retParams.ret == 0) {
+        retPrePkg.money = retParams.money
+        retPrePkg.gold = retParams.gold
     }
     eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: sendUid, prePkg: retPrePkg});
 }
@@ -172,7 +211,6 @@ exports.doCastGameStart = function(tid) {
             retPrePkg.players.push(ply);
         }
     })
-    console.log("hh", retPrePkg)
     players.forEach((player) => {
         if (player.getPlayState() == RummyConst.PLAYER_STATE_PLAY) {
             eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: player.getUid(), prePkg: retPrePkg});
@@ -194,8 +232,6 @@ exports.doSendDealCards = function(tid, uid) {
         retPrePkg.cards.push({card: sCard});
     });
 
-    console.log(retPrePkg);
-
     eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: player.getUid(), prePkg: retPrePkg});
 }
 
@@ -205,6 +241,53 @@ exports.doCastUserTurn = function(tid, uid, time) {
     let players = table.getPlayers();
     players.forEach((player) => {
         eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: player.getUid(), prePkg: retPrePkg});
+    })
+}
+
+RummySvs.doSendDraw = function(sendUid, retParams) {
+    let retPrePkg = {cmd: CmdDef.SVR_RUMMY_DRAW_CARD, ret: retParams.ret}
+    if (retParams.ret == 0) {
+        retPrePkg.region = retParams.region;
+        retPrePkg.dropCard = retParams.dropCard;
+        retPrePkg.card = retParams.card;
+        retPrePkg.heapCardNum = retParams.heapCardNum;
+    }    
+    eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: sendUid, prePkg: retPrePkg});
+}
+
+RummySvs.doCastDraw = function(drawCardUid, retParams) {
+    let retPrePkg = {cmd: CmdDef.SVR_CAST_RUMMY_DRAW_CARD, uid: drawCardUid}
+    retPrePkg.region = retParams.region;
+    retPrePkg.dropCard = retParams.dropCard;
+    retPrePkg.heapCardNum = retParams.heapCardNum;
+
+    let table = rummySvr.getTable(retParams.tid);
+    let players = table.getPlayers();
+    players.forEach((player) => {
+        if (player.getUid() != drawCardUid) {
+            eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: player.getUid(), prePkg: retPrePkg});
+        }
+    })
+}
+
+RummySvs.doSendDiscard = function(sendUid, retParams) {
+    let retPrePkg = {cmd: CmdDef.SVR_RUMMY_DISCARD_CARD, ret: retParams.ret}
+    if (retParams.ret == 0) {
+        retPrePkg.dropCard = retParams.dropCard;
+        retPrePkg.index = retParams.cliIndex;
+    }
+    eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: sendUid, prePkg: retPrePkg});
+}
+
+RummySvs.doCastDiscard = function(discardCardUid, retParams) {
+    let retPrePkg = {cmd: CmdDef.SVR_CAST_RUMMY_DISCARD, uid: discardCardUid, dropCard: retParams.dropCard}
+    
+    let table = rummySvr.getTable(retParams.tid);
+    let players = table.getPlayers();
+    players.forEach((player) => {
+        if (player.getUid() != discardCardUid) {
+            eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: player.getUid(), prePkg: retPrePkg});
+        }
     })
 }
 
