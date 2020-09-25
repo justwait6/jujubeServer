@@ -4,6 +4,8 @@ let app = '/root/project/jujubeServer';
 
 let MyConf = {}
 
+MyConf.ENABLE_HEART_BEAT_LOG = false
+
 MyConf.requires = {
   myDev: app + '/common/MyDev',
   myUtil: app + '/common/MyUtil',

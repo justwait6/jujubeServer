@@ -7,7 +7,7 @@ userBufMgr.initialize();
 const PkgReader = require("./MyPkgReader");
 const PkgBuilder = require("./MyPkgBuilder");
 const CmdDef = require("../protocol/CommandDef");
-
+var myConf = require("../../config/MyConf");
 const EVENT_NAMES = require("../event/EventNames");
 const eventMgr = require("../event/EventMgr");
 
@@ -24,7 +24,9 @@ server.on("connection", (socket) => {
       userBufMgr.releaseBuffer(userBuffer);
         
       PkgReader.asyncParse(pkg, (parsedPkg) => {
-        console.log(parsedPkg)
+        if (parsedPkg.cmd != CmdDef.CLI_HEART_BEAT || myConf.ENABLE_HEART_BEAT_LOG) {
+          console.log(parsedPkg)
+        }
         if (parsedPkg.uid) {
           userSocketMgr.bind(parsedPkg.uid, socket);
         }
