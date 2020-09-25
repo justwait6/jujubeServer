@@ -73,6 +73,21 @@ let CommandConfig = { // Rummy Server, 只有一个协议
       {name: "index", type: T.INT},
     ]
   },
+  [CmdDef.CLI_RUMMY_UPLOAD_GROUPS]: {
+    ver: 1,
+    fmt: [
+      {name: "uid", type: T.INT},
+      {name: "groups", type: T.ARRAY, lengthType: T.BYTE,
+        fmt: [
+          {name: "cards", type: T.ARRAY, lengthType: T.BYTE, 
+            fmt: [
+              {name: "card", type: T.BYTE},
+            ]
+          },
+        ]
+      },
+    ]
+  },
   
 
   [CmdDef.SVR_HEART_BEAT]: {
@@ -276,6 +291,13 @@ let CommandConfig = { // Rummy Server, 只有一个协议
       {name: "dropCard", type: T.BYTE},
     ]
   },
+  [CmdDef.SVR_RUMMY_UPLOAD_GROUPS]: {
+    ver: 1,
+    fmt: [
+      {name: "ret", type: T.BYTE},
+    ]
+  },
+  
 }
 
 module.exports = CommandConfig

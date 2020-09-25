@@ -27,6 +27,8 @@ RummySvs.onPackageReceived = function(parsedPkg) {
         self.doCliDraw(parsedPkg);
     } else if (parsedPkg.cmd == CmdDef.CLI_RUMMY_DISCARD_CARD) {
         self.doCliDiscard(parsedPkg);
+    } else if (parsedPkg.cmd == CmdDef.CLI_RUMMY_UPLOAD_GROUPS) {
+        self.doCliUploadGroups(parsedPkg);
     }
 }
 
@@ -112,6 +114,21 @@ RummySvs.doCliDiscard = function(parsedPkg) {
     if (retParams.ret == 0) {
         self.doCastDiscard(parsedPkg.uid, retParams);
     }
+}
+
+RummySvs.doCliUploadGroups = function(parsedPkg) {
+    let table = rummySvr.queryTableByUid(parsedPkg.uid);
+    if (!table) {
+        console.log("no table found!")
+        return;
+    }
+    let player = table.getPlayerByUid(parsedPkg.uid);
+    let isValid = player.checkAndSaveCliGroups(parsedPkg.groups);
+    let checkRet = (isValid) ? 0 : 1;
+    eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: parsedPkg.uid, prePkg: {
+        cmd: CmdDef.SVR_RUMMY_UPLOAD_GROUPS,
+        ret: checkRet,
+    }});
 }
 
 RummySvs.doSendEnterRoom = function(sendUid, table) {
