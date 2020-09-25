@@ -353,6 +353,8 @@ class Table {
             // DO NOT WRITE doCheckUserTurn, because
             // [RummySvs.doAutoDiscard] logic later trigers [doPlayerDiscard] logic,
             // which already has [doCheckUserTurn]
+        } else if (this.getOpStage() == RummyConst.OP_STAGE_FINISH) {
+
         }
     }
 
@@ -405,6 +407,36 @@ class Table {
 
         retParams.ret = 0;
         retParams.tid = this.getTid();
+        return retParams
+    }
+
+    doPlayerFinish(uid, finishCard) {
+        let retParams = {ret: 1};
+        let player = this.getPlayerByUid(uid);
+        if (this.getLastOpSeatId() != player.getSeatId()) { // not user's turn
+            return retParams;
+        }
+        // [finish] operation can only be done in discard card stage
+        if (this.getOpStage() != RummyConst.OP_STAGE_DISCARD) {
+            retParams.ret = 2;
+            return retParams;
+        }
+        let ret = player.deleteCard(finishCard);
+        if (ret == -1) { // not find card in player cards
+            retParams.ret = 3;
+            return retParams;
+        }
+        
+        clearTimeout(this.userTurnDelayId_);
+        this.setOpStage(RummyConst.OP_STAGE_FINISH);
+        this.userFinishDelayId_ = setTimeout(() => {
+            clearTimeout(this.userFinishDelayId_);
+            this.doUserTurnTimeout();
+        }, (RummyConst.PLAYER_FINISH_SECOND) * 1000);
+
+        retParams.ret = 0;
+        retParams.tid = this.getTid();
+        retParams.time = RummyConst.PLAYER_FINISH_SECOND;
         return retParams
     }
 }

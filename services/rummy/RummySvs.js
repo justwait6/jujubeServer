@@ -27,6 +27,8 @@ RummySvs.onPackageReceived = function(parsedPkg) {
         self.doCliDraw(parsedPkg);
     } else if (parsedPkg.cmd == CmdDef.CLI_RUMMY_DISCARD_CARD) {
         self.doCliDiscard(parsedPkg);
+    } else if (parsedPkg.cmd == CmdDef.CLI_RUMMY_FINISH) {
+        self.doCliFinish(parsedPkg);
     } else if (parsedPkg.cmd == CmdDef.CLI_RUMMY_UPLOAD_GROUPS) {
         self.doCliUploadGroups(parsedPkg);
     }
@@ -118,6 +120,20 @@ RummySvs.doCliDiscard = function(parsedPkg) {
 
 exports.doAutoDiscard = function(uid, discardCard, cliIdx) {
     self.doCliDiscard({uid: uid, card: discardCard, index: cliIdx});
+}
+
+RummySvs.doCliFinish = function(parsedPkg) {
+    let table = rummySvr.queryTableByUid(parsedPkg.uid);
+    if (!table) {
+        console.log("no table found!")
+        return;
+    }
+    let retParams = table.doPlayerFinish(parsedPkg.uid, parsedPkg.card);
+    retParams.card = parsedPkg.card;
+    self.doSendFinish(parsedPkg.uid, retParams);
+    if (retParams.ret == 0) {
+        self.doCastFinish(parsedPkg.uid, retParams);
+    }
 }
 
 RummySvs.doCliUploadGroups = function(parsedPkg) {
@@ -307,6 +323,28 @@ RummySvs.doCastDiscard = function(discardCardUid, retParams) {
     let players = table.getPlayers();
     players.forEach((player) => {
         if (player.getUid() != discardCardUid) {
+            eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: player.getUid(), prePkg: retPrePkg});
+        }
+    })
+}
+
+RummySvs.doSendFinish = function(sendUid, retParams) {
+    let retPrePkg = {cmd: CmdDef.SVR_RUMMY_FINISH, ret: retParams.ret}
+    if (retParams.ret == 0) {
+        retPrePkg.time = retParams.time;
+    }
+        
+    eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: sendUid, prePkg: retPrePkg});
+}
+
+RummySvs.doCastFinish = function(finishCardUid, retParams) {
+    let retPrePkg = {cmd: CmdDef.SVR_CAST_RUMMY_FINISH, uid: finishCardUid, time: retParams.time, card: retParams.card}
+    
+    let table = rummySvr.getTable(retParams.tid);
+    let players = table.getPlayers();
+    
+    players.forEach((player) => {
+        if (player.getUid() != finishCardUid) {
             eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: player.getUid(), prePkg: retPrePkg});
         }
     })
