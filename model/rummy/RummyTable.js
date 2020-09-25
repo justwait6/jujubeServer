@@ -117,6 +117,12 @@ class Table {
     getOpStage(stage) {
         return this.opStage_;
     }
+    setHasValidDeclare(valid) {
+        this.hasValidDeclare_ = valid;
+    }
+    hasValidDeclare() {
+        return this.hasValidDeclare_;
+    }
     getPlayers() {
         return this.players_ || [];
     }
@@ -374,6 +380,8 @@ class Table {
             // which already has [doCheckUserTurn]
         } else if (this.getOpStage() == RummyConst.OP_STAGE_FINISH) {
 
+        } else if (this.getOpStage() == RummyConst.OP_STAGE_LEFT_DECLARE) {
+
         }
     }
 
@@ -457,6 +465,57 @@ class Table {
         retParams.tid = this.getTid();
         retParams.time = RummyConst.PLAYER_FINISH_SECOND;
         return retParams
+    }
+
+    doPlayerDeclare(uid, groups) {
+        let retParams = {ret: 1, tid: this.getTid()};
+        let player = this.getPlayerByUid(uid);
+        if (!this.hasValidDeclare()) { // not has valid declaration
+            if (this.getLastOpSeatId() != player.getSeatId()) { // not user's turn
+                return retParams;
+            }
+            if (this.getOpStage() != RummyConst.OP_STAGE_FINISH) { // not in finish stage
+                retParams.ret = 2;
+                return retParams;
+            }  
+        } else { // already has valid declaration
+            if (this.getOpStage() != RummyConst.OP_STAGE_LEFT_DECLARE) { // not in left declare stage
+                retParams.ret = 3;
+                return retParams;
+            }
+        }
+        let judgeInfo = RummyUtil.judgeGroups(groups, this.getMagicCard());
+        console.log("judgeInfo", judgeInfo);
+        if (!this.hasValidDeclare() && judgeInfo.valid) { // the first valid declare player
+            this.doFirstValidDeclare_()
+            
+            retParams.ret = 0;
+            retParams.time = RummyConst.PLAYER_LEFT_DECLARE_SECOND;
+            retParams.isFirstValidDeclare = true;
+            return retParams;
+        }
+        
+        if (this.hasValidDeclare()) {
+            retParams.ret = 11;
+            retParams.isLeftDeclare = true; // left player declare(already has valid declaration)
+        } else {
+            retParams.ret = 10;
+            retParams.tryFirstFailDeclare = true;
+        }
+        retParams.score = judgeInfo.score;
+        return retParams;
+    }
+
+    doFirstValidDeclare_() {
+        clearTimeout(this.userFinishDelayId_);
+
+        this.setHasValidDeclare(true);
+        this.setOpStage(RummyConst.OP_STAGE_LEFT_DECLARE);
+
+        this.userLeftDeclareDelayId_ = setTimeout(() => {
+            clearTimeout(this.userLeftDeclareDelayId_);
+            this.doUserTurnTimeout();
+        }, (RummyConst.PLAYER_LEFT_DECLARE_SECOND) * 1000);
     }
 
     doPlayerDrop(uid) {

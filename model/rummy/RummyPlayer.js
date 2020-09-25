@@ -86,9 +86,8 @@ class Player {
     checkAndSaveCliGroups(groups) {
         let cliCards = new Array();
         groups.forEach(group => {
-            let cards = group.cards;
-            for (let i = 0; i < cards.length; i++) {
-                cliCards.push(cards[i].card);
+            for (let i = 0; i < group.length; i++) {
+                cliCards.push(group[i]);
             }
         });
         

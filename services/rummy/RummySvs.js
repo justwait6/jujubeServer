@@ -1,10 +1,9 @@
 let RummySvs = {};
 var self = RummySvs;
 
-const PkgDataType = require('../../common/socket/PkgDataType');
 var myConf = require('../../config/MyConf');
 const RummyConst = require('../../model/rummy/RummyConst');
-const { Player } = require('../../model/rummy/RummyPlayer');
+const RummyUtil = require('../../model/rummy/RumyUtil');
 var rummySvr = require(myConf.paths.model + '/rummy/RummySvr');
 
 const CmdDef = require(myConf.paths.common + "/protocol/CommandDef");
@@ -29,6 +28,8 @@ RummySvs.onPackageReceived = function(parsedPkg) {
         self.doCliDiscard(parsedPkg);
     } else if (parsedPkg.cmd == CmdDef.CLI_RUMMY_FINISH) {
         self.doCliFinish(parsedPkg);
+    } else if (parsedPkg.cmd == CmdDef.CLI_RUMMY_DECLARE) {
+        self.doCliDeclare(parsedPkg);
     } else if (parsedPkg.cmd == CmdDef.CLI_RUMMY_DROP) {
         self.doCliDrop(parsedPkg);
     } else if (parsedPkg.cmd == CmdDef.CLI_RUMMY_UPLOAD_GROUPS) {
@@ -138,6 +139,34 @@ RummySvs.doCliFinish = function(parsedPkg) {
     }
 }
 
+RummySvs.doCliDeclare = function(parsedPkg) {
+    let table = rummySvr.queryTableByUid(parsedPkg.uid);
+    if (!table) {
+        console.log("no table found!")
+        return;
+    }
+    console.log("parsedPkg.groups", parsedPkg.groups);
+    let refinedGroups = refineGroups_(parsedPkg.groups);
+    console.log("refinedGroups", refinedGroups);
+    let retParams = table.doPlayerDeclare(parsedPkg.uid, refinedGroups);
+    self.doSendDeclare(parsedPkg.uid, retParams);
+    if (retParams.isFirstValidDeclare || retParams.tryFirstFailDeclare) { // only when first declare player, send declare cast.
+        self.doCastDeclare(parsedPkg.uid, retParams);
+    }
+}
+
+function refineGroups_(groups) {
+    let rfGroups = new Array();
+    groups.forEach((group) => {
+        let cards = new Array();
+        for (let i = 0; i < group.cards.length; i++) {
+            cards.push(group.cards[i].card);
+        }
+        rfGroups.push(cards);
+    });
+    return rfGroups;
+}
+
 RummySvs.doCliDrop = function(parsedPkg) {
     let table = rummySvr.queryTableByUid(parsedPkg.uid);
     if (!table) {
@@ -158,7 +187,11 @@ RummySvs.doCliUploadGroups = function(parsedPkg) {
         return;
     }
     let player = table.getPlayerByUid(parsedPkg.uid);
-    let isValid = player.checkAndSaveCliGroups(parsedPkg.groups);
+    let refinedGroups = refineGroups_(parsedPkg.groups);
+    let isValid = player.checkAndSaveCliGroups(refinedGroups);
+    // test begin
+    RummyUtil.judgeGroups(refinedGroups, table.getMagicCard());
+    // test end
     let checkRet = (isValid) ? 0 : 1;
     eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: parsedPkg.uid, prePkg: {
         cmd: CmdDef.SVR_RUMMY_UPLOAD_GROUPS,
@@ -360,6 +393,28 @@ RummySvs.doCastFinish = function(finishCardUid, retParams) {
     
     players.forEach((player) => {
         if (player.getUid() != finishCardUid) {
+            eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: player.getUid(), prePkg: retPrePkg});
+        }
+    })
+}
+
+
+RummySvs.doSendDeclare = function(sendUid, retParams) {
+    let retPrePkg = {cmd: CmdDef.SVR_RUMMY_DECLARE, ret: retParams.ret}        
+    eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: sendUid, prePkg: retPrePkg});
+}
+
+RummySvs.doCastDeclare = function(declareUid, retParams) {
+    let retPrePkg = {cmd: CmdDef.SVR_CAST_RUMMY_DECLARE, uid: declareUid, ret: retParams.ret}
+    if (retParams.ret == 0) {
+        retPrePkg.time = retParams.time;
+    }
+    
+    let table = rummySvr.getTable(retParams.tid);
+    let players = table.getPlayers();
+    
+    players.forEach((player) => {
+        if (player.getUid() != declareUid) {
             eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: player.getUid(), prePkg: retPrePkg});
         }
     })
