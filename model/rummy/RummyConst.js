@@ -27,9 +27,9 @@ RummyConst.OP_STAGE_MONO_DECLARE = 4;
 RummyConst.OP_STAGE_LEFT_DECLARE = 5;
 
 RummyConst.GAME_START_SECOND = 3;
-RummyConst.GAME_CHOOSE_D_SECOND = 2; // choose dealer time
+RummyConst.GAME_CHOOSE_D_SECOND = 4; // choose dealer time
 RummyConst.GAME_DEAL_CARDS_SECOND = 2; // choose dealer time
-RummyConst.PLAYER_OP_SECOND = 30; // player operate time
+RummyConst.PLAYER_OP_SECOND = 15; // player operate time
 
 // rummy player
 RummyConst.PLAYER_STATE_OFF = 1; // not in the play

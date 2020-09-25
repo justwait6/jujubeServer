@@ -116,6 +116,10 @@ RummySvs.doCliDiscard = function(parsedPkg) {
     }
 }
 
+exports.doAutoDiscard = function(uid, discardCard, cliIdx) {
+    self.doCliDiscard({uid: uid, card: discardCard, index: cliIdx});
+}
+
 RummySvs.doCliUploadGroups = function(parsedPkg) {
     let table = rummySvr.queryTableByUid(parsedPkg.uid);
     if (!table) {

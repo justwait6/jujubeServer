@@ -105,6 +105,12 @@ class Table {
     getLastOpSeatId() {
         return this.lastOpSeatId_;
     }
+    setLastDrawCard(card) {
+        this.lastDrawCard_ = card;
+    }
+    getLastDrawCard() {
+        return this.lastDrawCard_;
+    }
     setOpStage(stage) {
         this.opStage_ = stage;
     }
@@ -329,6 +335,7 @@ class Table {
         }
 
         // deal cards anim time
+        clearTimeout(this.userTurnDelayId_);
         this.userTurnDelayId_ = setTimeout(() => {
             clearTimeout(this.userTurnDelayId_);
             this.doUserTurnTimeout();
@@ -337,6 +344,16 @@ class Table {
 
     doUserTurnTimeout() {
         console.log("todo, user turn timeout...")
+        let opPlayer = this.getPlayerBySeatId(this.getLastOpSeatId());
+        if (this.getOpStage() == RummyConst.OP_STAGE_DRAW) {
+            this.doCheckUserTurn(); // audo pass if user is in draw card stage
+        } else if (this.getOpStage() == RummyConst.OP_STAGE_DISCARD) {
+            // help discard user's last draw card
+            RummySvs.doAutoDiscard(opPlayer.getUid(), this.getLastDrawCard(), -1);
+            // DO NOT WRITE doCheckUserTurn, because
+            // [RummySvs.doAutoDiscard] logic later trigers [doPlayerDiscard] logic,
+            // which already has [doCheckUserTurn]
+        }
     }
 
     doPlayerDraw(uid, region) {
@@ -355,6 +372,7 @@ class Table {
             return retParams;
         }   
         player.insertCard(drawCard);
+        this.setLastDrawCard(drawCard);
         this.setOpStage(RummyConst.OP_STAGE_DISCARD);
 
         retParams.ret = 0;
@@ -382,6 +400,9 @@ class Table {
             return retParams;
         }
         this.cardToOldSlot_(discardCard);
+        
+        this.doCheckUserTurn() // if discard card ok, check next operate user
+
         retParams.ret = 0;
         retParams.tid = this.getTid();
         return retParams
