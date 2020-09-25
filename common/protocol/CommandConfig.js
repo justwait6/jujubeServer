@@ -80,6 +80,12 @@ let CommandConfig = { // Rummy Server, 只有一个协议
       {name: "card", type: T.BYTE},
     ]
   },
+  [CmdDef.CLI_RUMMY_DROP]: {
+    ver: 1,
+    fmt: [
+      {name: "uid", type: T.INT},
+    ]
+  },
   [CmdDef.CLI_RUMMY_UPLOAD_GROUPS]: {
     ver: 1,
     fmt: [
@@ -313,6 +319,22 @@ let CommandConfig = { // Rummy Server, 只有一个协议
       {name: "card", type: T.BYTE},
     ]
   },
+  [CmdDef.SVR_RUMMY_DROP]: {
+    ver: 1,
+    fmt: [
+      {name: "ret", type: T.BYTE},
+      {name: "money", type: T.LONG, depends: function(ctx){ return ctx.ret == 0; } },
+      {name: "minusMoney", type: T.LONG, depends: function(ctx){ return ctx.ret == 0; } },
+    ]
+  },
+  [CmdDef.SVR_CAST_RUMMY_DROP]: {
+    ver: 1,
+    fmt: [
+      {name: "uid", type: T.INT},
+      {name: "money", type: T.LONG},
+      {name: "minusMoney", type: T.LONG},
+    ]
+  },  
   [CmdDef.SVR_RUMMY_UPLOAD_GROUPS]: {
     ver: 1,
     fmt: [

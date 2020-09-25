@@ -29,6 +29,8 @@ RummySvs.onPackageReceived = function(parsedPkg) {
         self.doCliDiscard(parsedPkg);
     } else if (parsedPkg.cmd == CmdDef.CLI_RUMMY_FINISH) {
         self.doCliFinish(parsedPkg);
+    } else if (parsedPkg.cmd == CmdDef.CLI_RUMMY_DROP) {
+        self.doCliDrop(parsedPkg);
     } else if (parsedPkg.cmd == CmdDef.CLI_RUMMY_UPLOAD_GROUPS) {
         self.doCliUploadGroups(parsedPkg);
     }
@@ -133,6 +135,19 @@ RummySvs.doCliFinish = function(parsedPkg) {
     self.doSendFinish(parsedPkg.uid, retParams);
     if (retParams.ret == 0) {
         self.doCastFinish(parsedPkg.uid, retParams);
+    }
+}
+
+RummySvs.doCliDrop = function(parsedPkg) {
+    let table = rummySvr.queryTableByUid(parsedPkg.uid);
+    if (!table) {
+        console.log("no table found!")
+        return;
+    }
+    let retParams = table.doPlayerDrop(parsedPkg.uid);
+    self.doSendDrop(parsedPkg.uid, retParams);
+    if (retParams.ret == 0) {
+        self.doCastDrop(parsedPkg.uid, retParams);
     }
 }
 
@@ -345,6 +360,29 @@ RummySvs.doCastFinish = function(finishCardUid, retParams) {
     
     players.forEach((player) => {
         if (player.getUid() != finishCardUid) {
+            eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: player.getUid(), prePkg: retPrePkg});
+        }
+    })
+}
+
+RummySvs.doSendDrop = function(sendUid, retParams) {
+    let retPrePkg = {cmd: CmdDef.SVR_RUMMY_DROP, ret: retParams.ret}
+    if (retParams.ret == 0) {
+        retPrePkg.money = retParams.money;
+        retPrePkg.minusMoney = retParams.minusMoney;
+    }
+        
+    eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: sendUid, prePkg: retPrePkg});
+}
+
+RummySvs.doCastDrop = function(dropUid, retParams) {
+    let retPrePkg = {cmd: CmdDef.SVR_CAST_RUMMY_DROP, uid: dropUid, money: retParams.money, minusMoney: retParams.minusMoney}
+    
+    let table = rummySvr.getTable(retParams.tid);
+    let players = table.getPlayers();
+    
+    players.forEach((player) => {
+        if (player.getUid() != dropUid) {
             eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: player.getUid(), prePkg: retPrePkg});
         }
     })

@@ -120,6 +120,15 @@ class Table {
     getPlayers() {
         return this.players_ || [];
     }
+    getCurPlayersNum() { // players in current play
+        let curPlayerNum = 0;
+        this.players_.forEach((player) => {
+            if (player.getPlayState() == RummyConst.PLAYER_STATE_PLAY) {
+                curPlayerNum++;
+            }
+        })
+        return curPlayerNum;
+    }
     isPlayerExist(uid) {
         let isExist = false;
         this.players_.forEach((player) => {
@@ -328,18 +337,28 @@ class Table {
                 break;
             }
         }
-
+        
         // broadcast current user turn
-        if (opUid != -1) {
+        if (this.getCurPlayersNum() < 2) {
+            console.log("Only one player ... no turn")
+            return;
+        } else if (opUid != -1) {
             RummySvs.doCastUserTurn(this.getTid(), opUid, RummyConst.PLAYER_OP_SECOND);
+        } else {
+            console.log("No player turn ... no turn")
+            return;
         }
 
         // deal cards anim time
-        clearTimeout(this.userTurnDelayId_);
+        this.doClearUserTurn_();
         this.userTurnDelayId_ = setTimeout(() => {
-            clearTimeout(this.userTurnDelayId_);
+            this.doClearUserTurn_();
             this.doUserTurnTimeout();
         }, (RummyConst.PLAYER_OP_SECOND) * 1000);
+    }
+
+    doClearUserTurn_() {
+        clearTimeout(this.userTurnDelayId_);
     }
 
     doUserTurnTimeout() {
@@ -426,8 +445,8 @@ class Table {
             retParams.ret = 3;
             return retParams;
         }
-        
-        clearTimeout(this.userTurnDelayId_);
+
+        this.doClearUserTurn_()
         this.setOpStage(RummyConst.OP_STAGE_FINISH);
         this.userFinishDelayId_ = setTimeout(() => {
             clearTimeout(this.userFinishDelayId_);
@@ -437,6 +456,28 @@ class Table {
         retParams.ret = 0;
         retParams.tid = this.getTid();
         retParams.time = RummyConst.PLAYER_FINISH_SECOND;
+        return retParams
+    }
+
+    doPlayerDrop(uid) {
+        let retParams = {ret: 1};
+        let player = this.getPlayerByUid(uid);
+        if (this.getLastOpSeatId() != player.getSeatId()) { // not user's turn
+            return retParams;
+        }
+        // [drop] operation can only be done in draw card stage
+        if (this.getOpStage() != RummyConst.OP_STAGE_DRAW) {
+            retParams.ret = 2;
+            return retParams;
+        }
+
+        player.setPlayState(RummyConst.PLAYER_STATE_DROP);
+        this.doCheckUserTurn();
+
+        retParams.ret = 0;
+        retParams.tid = this.getTid();
+        retParams.money = BigInt(0); // game over checkout, todo...
+        retParams.minusMoney = BigInt(0);
         return retParams
     }
 }
