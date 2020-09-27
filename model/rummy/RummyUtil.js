@@ -92,7 +92,7 @@ RummyUtil.judgeGroups = function(groups, tableMagic) {
         });
         confs[idx].point = (confs[idx].point > RummyConst.MAX_SCORE) ? RummyConst.MAX_SCORE : confs[idx].point;
     });
-    console.log("confs", confs)
+    // console.log("confs", confs)
 
     let isHasPureSequence = false;
     let sequenceCount = 0;
@@ -108,7 +108,7 @@ RummyUtil.judgeGroups = function(groups, tableMagic) {
             isHasTypeOTHER = true;
         }
     });
-    console.log("isHasPureSequence...", isHasPureSequence, sequenceCount, isHasTypeOTHER)
+    // console.log("isHasPureSequence...", isHasPureSequence, sequenceCount, isHasTypeOTHER)
     let score = 0;
     confs.forEach(conf => { // recalculate score
         if (conf.cardType == RummyConst.CARD_TYPE_STRAIGHT_FLUSH) {conf.point = 0;}
@@ -118,7 +118,7 @@ RummyUtil.judgeGroups = function(groups, tableMagic) {
         if (isHasPureSequence && sequenceCount >= 2 && conf.cardType == RummyConst.CARD_TYPE_SANGONG) {
             conf.point = 0; 
         }
-        console.log("conf.point", conf.point)
+        // console.log("conf.point", conf.point)
         score += conf.point;
     });
     
@@ -146,17 +146,17 @@ RummyUtil.getGroupCardType = function(group, tableMagic) {
 
 // 使用前提, group牌大于2张
 RummyUtil.isPureSequence = function(group) {    
-    console.log("isPureSequence 判断有Joker牌")
+    // console.log("isPureSequence 判断有Joker牌")
     // 有Joker牌, 不能组成纯顺子(可以有魔法牌, 魔法牌当普通牌)
     for (let i = 0; i < group.length; i++) {
         if (group[i] == CardsDef.BIG_JOKER) {
             return false;
         }
     }
-    console.log("isPureSequence 判断有Joker牌 END")
+    // console.log("isPureSequence 判断有Joker牌 END")
 
     // 判断同花色
-    console.log("isPureSequence, 判断同花色")
+    // console.log("isPureSequence, 判断同花色")
     let firstVariety = -1;
     for (let i = 0; i < group.length; i++) {
         let curVariety = group[i] >> 4;
@@ -166,7 +166,7 @@ RummyUtil.isPureSequence = function(group) {
             return false;
         }
     }
-    console.log("isPureSequence, 判断同花色 END")
+    // console.log("isPureSequence, 判断同花色 END")
 
     // 判断能连成顺子
     let values = new Array();
@@ -181,9 +181,9 @@ RummyUtil.isPureSequence = function(group) {
             hasKing = true;
         }
     }
-    console.log("isPureSequence, hasAce hasKing: ", hasAce, hasKing)
+    // console.log("isPureSequence, hasAce hasKing: ", hasAce, hasKing)
     values.sort((a, b) => a - b);
-    console.log("isPureSequence, values: ",  values)
+    // console.log("isPureSequence, values: ",  values)
     if (hasAce && !hasKing) { // 有Ace牌, 没King牌: Ace牌能连成[A, 2, 3, ...]
         if (values[0] != CardsDef.TWO_VALUE) { // 首张牌不是2, 不能成顺子
             return false;
@@ -217,8 +217,8 @@ RummyUtil.isSequence = function(group, tableMagic) {
             commonCards.push(card);
         }
     });
-    console.log("isSeq variableCardNum", variableCardNum)
-    console.log("isSeq commonCards", commonCards)
+    // console.log("isSeq variableCardNum", variableCardNum)
+    // console.log("isSeq commonCards", commonCards)
     if (variableCardNum <= 0) { // 没有Joker牌或魔法牌, 不能组成顺子
         return false;
     }
@@ -229,7 +229,7 @@ RummyUtil.isSequence = function(group, tableMagic) {
     }
 
     // 下面的逻辑, commonCards.length > 1
-    console.log("isSeq 是否同花色", commonCards)
+    // console.log("isSeq 是否同花色", commonCards)
     // 判断普通牌是否同花色
     let firstVariety = -1
     for (let i = 0; i < commonCards.length; i++) {
@@ -242,7 +242,7 @@ RummyUtil.isSequence = function(group, tableMagic) {
     }
 
     // 判断是否有相同的牌
-    console.log("isSeq 判断是否有相同的牌", commonCards)
+    // console.log("isSeq 判断是否有相同的牌", commonCards)
     commonCards.sort((a, b) => a - b);
     for (let i = 0; i < commonCards.length - 1; i++) {
         if (commonCards[i] == commonCards[i + 1]) {
@@ -251,7 +251,7 @@ RummyUtil.isSequence = function(group, tableMagic) {
     }
 
     // 获取同花色牌点数集合
-    console.log("isSeq 判断是否有相同的牌 begin...")
+    // console.log("isSeq 判断是否有相同的牌 begin...")
     let values = new Array();
     let hasAce = false;
     let hasKing = false;
@@ -264,10 +264,10 @@ RummyUtil.isSequence = function(group, tableMagic) {
             hasKing = true;
         }
     }
-    console.log("isSeq 判断是否有相同的牌 values", values)
+    // console.log("isSeq 判断是否有相同的牌 values", values)
     // 组成顺子需要的可变牌数量
     values.sort((a, b) => a - b);
-    console.log("isSeq dd: ", (values[values.length - 1] - values[0] + 1) - values.length);
+    // console.log("isSeq dd: ", (values[values.length - 1] - values[0] + 1) - values.length);
     if (hasKing) { // 有King牌, 不能组成含A开头的顺子
         // 首尾两张牌夹着的空缺牌, 小于等于可变牌, 可组成, 否则不可组成
         return (values[values.length - 1] - values[0] + 1) - values.length <= variableCardNum;
@@ -276,8 +276,8 @@ RummyUtil.isSequence = function(group, tableMagic) {
     } else { // 无King牌有Ace牌, [A, 2, ...]和[..., K, A]作比较
         let candidate1 = (values[values.length - 2] - 1 + 1) - values.length; // 减去的1表示减去Ace牌(当作1)牌值
         let candidate2 = (values[values.length - 1] - values[0] + 1) - values.length;
-        console.log("isSeq candidate1, candidate2", candidate1, candidate2);
-        console.log("isSeq Math.min(candidate1, candidate2)", Math.min(candidate1, candidate2));
+        // console.log("isSeq candidate1, candidate2", candidate1, candidate2);
+        // console.log("isSeq Math.min(candidate1, candidate2)", Math.min(candidate1, candidate2));
         return Math.min(candidate1, candidate2) <= variableCardNum;
     }
 }
