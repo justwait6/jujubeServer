@@ -160,6 +160,11 @@ RummySvs.doCliDeclare = function(parsedPkg) {
     }
 }
 
+exports.doAutoDeclare = function(finishUid, groups) {
+    let derfGroups = derefineGroups_(groups);
+    RummySvs.doCliDeclare({uid: finishUid, groups: derfGroups});
+}
+
 function refineGroups_(groups) {
     let rfGroups = new Array();
     groups.forEach((group) => {
@@ -199,7 +204,7 @@ RummySvs.doCliDrop = function(parsedPkg) {
     }
 }
 
-exports.autoCliDrop = function(uid, dropType) {
+exports.doAutoCliDrop = function(uid, dropType) {
     self.doCliDrop({uid: uid, dropType: dropType});
 }
 

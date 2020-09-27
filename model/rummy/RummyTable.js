@@ -221,7 +221,7 @@ class Table {
         if (isExist) {
             if (this.getPlayerByUid(uid).getPlayState() == RummyConst.PLAYER_STATE_PLAY) {
                 // in playing game and force exit room
-                RummySvs.autoCliDrop(uid, RummyConst.PLAYER_DROP_BAD_BEHAVIOR);
+                RummySvs.doAutoCliDrop(uid, RummyConst.PLAYER_DROP_BAD_BEHAVIOR);
             }
 
             let player = this.deletePlayerByUid(uid);
@@ -407,9 +407,15 @@ class Table {
             // [RummySvs.doAutoDiscard] logic later trigers [doPlayerDiscard] logic,
             // which already has [doCheckUserTurn]
         } else if (this.getOpStage() == RummyConst.OP_STAGE_FINISH) {
-
+            let opSeatId = this.getLastOpSeatId();
+            let finishPlayer = this.getPlayerBySeatId(opSeatId);
+            RummySvs.doAutoDeclare(finishPlayer.getUid(), finishPlayer.getGroups());
         } else if (this.getOpStage() == RummyConst.OP_STAGE_LEFT_DECLARE) {
-
+            this.getPlayers().forEach(player => {
+                if (player.getPlayState() == RummyConst.PLAYER_STATE_PLAY && !player.isFinishDeclare()) {
+                    RummySvs.doAutoDeclare(player.getUid(), player.getGroups());
+                }
+            });
         }
     }
 
@@ -556,7 +562,7 @@ class Table {
         clearTimeout(this.userFinishDelayId_);
         let losePlayer = this.getPlayerByUid(uid);
         losePlayer.setFinishDeclare(true);
-        RummySvs.autoCliDrop(uid, RummyConst.PLAYER_DROP_WRONG_DECLARE);
+        RummySvs.doAutoCliDrop(uid, RummyConst.PLAYER_DROP_WRONG_DECLARE);
     }
 
     doLeftDeclare_(uid) {
