@@ -37,6 +37,13 @@ RummyConst.PLAYER_STATE_OFF = 1; // not in the play
 RummyConst.PLAYER_STATE_DROP = 2; // in the play, but dropped
 RummyConst.PLAYER_STATE_PLAY = 3; // in the play and not drop
 
+RummyConst.PLAYER_NO_DROP = 0; // no drop
+RummyConst.PLAYER_DROP_FIRST = 1; // first round drop
+RummyConst.PLAYER_DROP_LATER = 2; // in the play and not drop
+RummyConst.PLAYER_DROP_BAD_BEHAVIOR = 3; // force exit room when game
+RummyConst.PLAYER_DROP_WRONG_DECLARE = 4; // wrong declare
+
+
 // rummy game logic
 RummyConst.MAX_SCORE = 80;
 RummyConst.PLAYER_INIT_CARD_NUM = 13;

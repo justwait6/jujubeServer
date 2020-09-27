@@ -48,6 +48,7 @@ let CommandDef = {
   SVR_CAST_RUMMY_RESUFFLE: 0x14A4, // 广播重新洗牌
   SVR_RUMMY_BONUS_TIME: 0x14A5, // 广播玩家bonus time
   SVR_RUMMY_USER_MISS_TURNS: 0x14A6, // 广播玩家超时次数
+  SVR_RUMMY_GAME_END_SCORE: 0x14A7, // 广播游戏结算(会多次广播)
   SVR_RUMMY_DEAL_CARDS: 0x0434, // 游戏发牌
   SVR_RUMMY_DRAW_CARD: 0x040D, // 请求摸牌返回
   SVR_CAST_RUMMY_DRAW_CARD: 0x140D, // 广播玩家摸牌

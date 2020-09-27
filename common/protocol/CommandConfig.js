@@ -386,7 +386,34 @@ let CommandConfig = { // Rummy Server, 只有一个协议
       },
     ]
   },
-  
+
+  [CmdDef.SVR_RUMMY_GAME_END_SCORE]: {
+    ver: 1,
+    fmt: [
+      {name:"winUid", type: T.INT},
+      {name: "users", type: T.ARRAY, lengthType: T.BYTE,
+        fmt: [
+          {name:"uid", type: T.INT},
+          {name:"score", type: T.INT},
+          {name:"money", type: T.LONG},
+          {name:"winMoney", type: T.LONG},
+          {name:"isDrop", type: T.BYTE},
+          {name: "groups", type: T.ARRAY, lengthType: T.BYTE,
+            fmt: [
+              {name: "cards", type: T.ARRAY, lengthType: T.BYTE,
+                  fmt: [
+                    {name:"card", type: T.BYTE},
+                  ]
+              }
+            ]
+          },
+          {name: "name", type: T.STRING},
+          {name: "isFinishDeclare", type: T.BYTE},
+        ]
+      },
+      {name: "endtype", type: T.BYTE},
+    ]
+  },
 }
 
 module.exports = CommandConfig

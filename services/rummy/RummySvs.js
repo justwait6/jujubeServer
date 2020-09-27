@@ -169,6 +169,19 @@ function refineGroups_(groups) {
     return rfGroups;
 }
 
+function derefineGroups_(rfgroups) {
+    let derfgroups = new Array();
+    rfgroups.forEach((group) => {
+        let derfgroup = {};
+        derfgroup.cards = new Array();
+        for (let i = 0; i < group.length; i++) {
+            derfgroup.cards.push({card: group[i]});
+        }
+        derfgroups.push(derfgroup);
+    });
+    return derfgroups;
+}
+
 RummySvs.doCliDrop = function(parsedPkg) {
     let table = rummySvr.queryTableByUid(parsedPkg.uid);
     if (!table) {
@@ -176,10 +189,15 @@ RummySvs.doCliDrop = function(parsedPkg) {
         return;
     }
     let retParams = table.doPlayerDrop(parsedPkg.uid);
+    console.log("doCliDrop retParams", retParams)
     self.doSendDrop(parsedPkg.uid, retParams);
     if (retParams.ret == 0) {
         self.doCastDrop(parsedPkg.uid, retParams);
     }
+}
+
+exports.autoCliDrop = function(uid, dropType) {
+    self.doCliDrop({uid: uid, dropType: dropType});
 }
 
 RummySvs.doCliUploadGroups = function(parsedPkg) {
@@ -455,6 +473,38 @@ RummySvs.doCastDrop = function(dropUid, retParams) {
             eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: player.getUid(), prePkg: retPrePkg});
         }
     })
+}
+
+exports.doCastGameOverResult = function(tid) {
+    let table = rummySvr.getTable(tid);
+
+    let retPrePkg = {cmd: CmdDef.SVR_RUMMY_GAME_END_SCORE}
+    retPrePkg.winUid = table.getWinnerUid();
+    retPrePkg.users = new Array();
+    table.getPlayers().forEach(player => {
+        if (player.getPlayState() == RummyConst.PLAYER_STATE_DROP || player.getPlayState() == RummyConst.PLAYER_STATE_PLAY) {
+            let pp = {};
+            pp.uid = player.getUid();
+            pp.score = player.getScore();
+            pp.money = player.getMoney();
+            pp.winMoney = player.getWinMoney();
+            pp.isDrop = (player.getPlayState() == RummyConst.PLAYER_STATE_DROP) ? 1 : 0;
+            pp.groups = derefineGroups_(player.getGroups());
+            pp.name = player.getNickname();
+            pp.isFinishDeclare = player.isFinishDeclare() ? 1 : 0;
+            retPrePkg.users.push(pp);
+        }
+    });
+    retPrePkg.endtype = (table.hasValidDeclare()) ? 1 : 0;
+
+    console.log("doCastGameOverResult", retPrePkg)
+
+    let players = table.getPlayers();
+    players.forEach(player => {
+        if (player.getPlayState() == RummyConst.PLAYER_STATE_DROP || player.getPlayState() == RummyConst.PLAYER_STATE_PLAY) {
+            eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: player.getUid(), prePkg: retPrePkg});
+        }
+    });
 }
 
 module.exports = RummySvs;

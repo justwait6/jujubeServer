@@ -59,8 +59,8 @@ RummyUtil.shuffle1ToNum_ = function(num) {
     for (i = 0; i < num; i++) {
         idxs.push(i + 1);
     }
-    for (i = idxs.length - 1; i >= 0; i--) {
-        let randomIdx = getRandomInteger(0, i);
+    for (i = idxs.length - 1; i >= 1; i--) {
+        let randomIdx = getRandomInteger(0, i - 1);
 
         // swap
         let temp = idxs[i];
@@ -121,6 +121,7 @@ RummyUtil.judgeGroups = function(groups, tableMagic) {
         // console.log("conf.point", conf.point)
         score += conf.point;
     });
+    score = (score > RummyConst.MAX_SCORE) ? RummyConst.MAX_SCORE : score;
     
     retParams.score = score;
     if (isHasPureSequence && sequenceCount >= 2 && !isHasTypeOTHER && score == 0) {
@@ -344,6 +345,32 @@ RummyUtil.getCardScore = function(cardUint, tableMagic) {
         cardScore = cardValue;
     }
     return cardScore;
+}
+
+RummyUtil.getNoDropScore = function(isWinner, groups, magicCard) {
+    let score = RummyConst.MAX_SCORE;
+    if (isWinner) {
+        score = 0;
+    } else {
+        let judgeParams = RummyUtil.judgeGroups(groups, magicCard);
+        score = judgeParams.score;
+        if (judgeParams.valid && !isWinner) {
+            score = 2;
+        }
+    }
+    return score;
+}
+
+RummyUtil.getDropScore = function(dropType) {
+    let score = RummyConst.MAX_SCORE;
+    if (dropType == RummyConst.PLAYER_DROP_FIRST) {
+        score = 20;
+    } else if (dropType == RummyConst.PLAYER_DROP_LATER) {
+        score = 40;
+    } else if (dropType == RummyConst.PLAYER_DROP_BAD_BEHAVIOR || dropType == RummyConst.PLAYER_DROP_WRONG_DECLARE) {
+        score = RummyConst.MAX_SCORE;
+    }
+    return score;
 }
 
 module.exports = RummyUtil;

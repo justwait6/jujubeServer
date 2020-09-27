@@ -1,3 +1,5 @@
+const RummyConst = require("./RummyConst");
+
 let RummyPlayer = {}
 class Player {
     constructor(uid, userinfo) {
@@ -29,12 +31,53 @@ class Player {
         return BigInt(this.money_ || 0);
     }
 
+    setWinMoney(money) {
+        this.winMoney_ = money;
+    }
+
+    getWinMoney() {
+        return BigInt(this.winMoney_ || 0);
+    }
+
+    setScore(score) {
+        this.score_ = score;
+    }
+
+    getScore() {
+        return this.score_;
+    }
+
     setGold(gold) {
         this.gold_ = gold;
     }
 
     getGold() {
         return BigInt(this.gold_ || 0);
+    }
+
+    triggerRound() {
+        this.curRound = this.curRound || 0;
+        this.curRound++;
+    }
+
+    isFirstRound() {
+        return this.curRound == 1;
+    }
+
+    setDropType(dropType) {
+        return this.dropType_ = dropType;
+    }
+
+    getDropType() {
+        this.dropType_ || RummyConst.PLAYER_NO_DROP;
+    }
+
+    setFinishDeclare(finishDeclare) {
+        this.finishDeclare_ = finishDeclare;
+    }
+
+    isFinishDeclare() {
+        return this.finishDeclare_;
     }
 
     setPlayState(state) {
@@ -51,6 +94,10 @@ class Player {
 
     getUserinfo() {
         return this.userinfo_ || "";
+    }
+
+    getNickname() {
+        return JSON.parse(this.userinfo_).nickName;
     }
 
     setChooseDCard(cardUinit) {
@@ -71,7 +118,7 @@ class Player {
         this.groups_ = groups
     }
     getGroups() {
-        return this.groups_
+        return this.groups_ || this.mCards_
     }
     insertCard(card) {
         this.mCards_.push(card);
