@@ -3,7 +3,7 @@ var self = RummySvs;
 
 var myConf = require('../../config/MyConf');
 const RummyConst = require('../../model/rummy/RummyConst');
-const RummyUtil = require('../../model/rummy/RumyUtil');
+const RummyUtil = require('../../model/rummy/RummyUtil');
 var rummySvr = require(myConf.paths.model + '/rummy/RummySvr');
 
 const CmdDef = require(myConf.paths.common + "/protocol/CommandDef");
@@ -34,6 +34,8 @@ RummySvs.onPackageReceived = function(parsedPkg) {
         self.doCliDrop(parsedPkg);
     } else if (parsedPkg.cmd == CmdDef.CLI_RUMMY_UPLOAD_GROUPS) {
         self.doCliUploadGroups(parsedPkg);
+    } else if (parsedPkg.cmd == CmdDef.CLI_RUMMY_GET_DROP_CARDS) {
+        self.doCliGetDropCards(parsedPkg);
     }
 }
 
@@ -196,6 +198,18 @@ RummySvs.doCliUploadGroups = function(parsedPkg) {
     eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: parsedPkg.uid, prePkg: {
         cmd: CmdDef.SVR_RUMMY_UPLOAD_GROUPS,
         ret: checkRet,
+    }});
+}
+
+RummySvs.doCliGetDropCards = function(parsedPkg) {
+    let table = rummySvr.queryTableByUid(parsedPkg.uid);
+    let midCards = new Array();
+    table.getOldSlotCards().forEach(card => {
+        midCards.push({card: card});
+    });
+    eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: parsedPkg.uid, prePkg: {
+        cmd: CmdDef.SVR_RUMMY_GET_DROP_CARDS,
+        cards: midCards,
     }});
 }
 

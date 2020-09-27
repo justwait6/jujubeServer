@@ -116,6 +116,12 @@ let CommandConfig = { // Rummy Server, 只有一个协议
       },
     ]
   },
+  [CmdDef.CLI_RUMMY_GET_DROP_CARDS]: {
+    ver: 1,
+    fmt: [
+      {name: "uid", type: T.INT},
+    ]
+  },
   
 
   [CmdDef.SVR_HEART_BEAT]: {
@@ -368,6 +374,16 @@ let CommandConfig = { // Rummy Server, 只有一个协议
     ver: 1,
     fmt: [
       {name: "ret", type: T.BYTE},
+    ]
+  },
+  [CmdDef.SVR_RUMMY_GET_DROP_CARDS]: {
+    ver: 1,
+    fmt: [
+      {name: "cards", type: T.ARRAY, lengthType: T.BYTE,
+        fmt: [
+          {name: "card", type: T.BYTE},
+        ]
+      },
     ]
   },
   

@@ -2,7 +2,7 @@ let RummyTable = {};
 const RummyConst = require("./RummyConst");
 
 var myConf = require('../../config/MyConf');
-const RummyUtil = require("./RumyUtil");
+const RummyUtil = require("./RummyUtil");
 const RummySvs = require("../../services/rummy/RummySvs");
 
 let RummyPlayer = require("./RummyPlayer");
