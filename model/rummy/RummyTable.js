@@ -308,7 +308,8 @@ class Table {
     }
 
     doDealCards() {
-        let cards = RummyUtil.createInitCards();
+        let cardDeckNum = (this.getPlayerSeats().length <= 2) ? 1 : 2;
+        let cards = RummyUtil.createInitCards(cardDeckNum);
         cards = RummyUtil.shuffleCards(cards);
 
         this.setMagicCard(cards.splice(0, 1)[0]);

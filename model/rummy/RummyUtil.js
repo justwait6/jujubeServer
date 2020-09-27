@@ -8,10 +8,9 @@ function getRandomInteger(min, max) {
     return Math.floor(Math.random() * (max - min + 1) ) + min;
 }
 
-RummyUtil.createInitCards = function() {
+RummyUtil.createInitCards = function(deckNum) { // decks of cards
     let cards = new Array();
     const deck = CardsDef.cards;
-    const deckNum = 2; // 2 decks of cards
     for (let j = 0; j < deckNum; j ++) {
         for (let i = 0; i < deck.length; i++) {
             if (deck[i] != CardsDef.SMALL_JOKER) {
