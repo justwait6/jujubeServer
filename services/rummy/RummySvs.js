@@ -155,6 +155,9 @@ RummySvs.doCliDeclare = function(parsedPkg) {
     if (retParams.isFirstValidDeclare || retParams.tryFirstFailDeclare) { // only when first declare player, send declare cast.
         self.doCastDeclare(parsedPkg.uid, retParams);
     }
+    if (retParams.isFirstValidDeclare) {
+        table.onCastDeclareFinish();
+    }
 }
 
 function refineGroups_(groups) {

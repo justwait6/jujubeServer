@@ -550,8 +550,6 @@ class Table {
             clearTimeout(this.userLeftDeclareDelayId_);
             this.doUserTurnTimeout();
         }, (RummyConst.PLAYER_LEFT_DECLARE_SECOND) * 1000);
-
-        RummySvs.doCastGameOverResult(this.getTid());
     }
 
     doTryFailDeclare_(uid) {
@@ -565,6 +563,10 @@ class Table {
         let player = this.getPlayerByUid(uid);
         player.setFinishDeclare(true);
         this.doScoreAndMoneyCalc_();
+        RummySvs.doCastGameOverResult(this.getTid());
+    }
+
+    onCastDeclareFinish() {
         RummySvs.doCastGameOverResult(this.getTid());
     }
 
