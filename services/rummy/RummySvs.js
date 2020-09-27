@@ -188,7 +188,7 @@ RummySvs.doCliDrop = function(parsedPkg) {
         console.log("no table found!")
         return;
     }
-    let retParams = table.doPlayerDrop(parsedPkg.uid);
+    let retParams = table.doPlayerDrop(parsedPkg.uid, parsedPkg.dropType);
     console.log("doCliDrop retParams", retParams)
     self.doSendDrop(parsedPkg.uid, retParams);
     if (retParams.ret == 0) {
@@ -446,9 +446,7 @@ RummySvs.doCastDeclare = function(declareUid, retParams) {
     let players = table.getPlayers();
     
     players.forEach((player) => {
-        if (player.getUid() != declareUid) {
-            eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: player.getUid(), prePkg: retPrePkg});
-        }
+        eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: player.getUid(), prePkg: retPrePkg});
     })
 }
 
