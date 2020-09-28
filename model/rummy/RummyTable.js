@@ -148,6 +148,10 @@ class Table {
             let fCard = (this.oldSlotCards_.length <= 0) ? -1 : this.oldSlotCards_[this.oldSlotCards_.length - 1];
             this.setFirstDropCard(fCard);
         }
+
+        if (this.getNewSlotCardNum() == 0 && this.oldSlotCards_.length > 1) { // triger reshuffle
+            this.triggerReshuffleOldCards_();
+        }
         return card;
     }
     cardToOldSlot_(card) {
@@ -310,6 +314,12 @@ class Table {
         clearTimeout(this.countDownDelayId_);
         clearInterval(this.countDownLoopId_);
         this.resetTable_();
+    }
+
+    triggerReshuffleOldCards_() {
+        let cards = this.oldSlotCards_.splice(0, this.oldSlotCards_.length - 1);
+        let newCards = RummyUtil.shuffleCards(cards);
+        this.setNewSlotCards(newCards);
     }
 
     doGameStart() {
