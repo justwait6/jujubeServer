@@ -134,6 +134,12 @@ let CommandConfig = { // Rummy Server, 只有一个协议
       }
     ]
   },
+  [CmdDef.SVR_HALL_LOGIN]: {
+    ver: 1,
+    fmt: [
+      {name: "ret", type: T.BYTE},
+    ]
+  },
   [CmdDef.SVR_PUSH]: {
     ver: 1,
     fmt: [
@@ -199,6 +205,7 @@ let CommandConfig = { // Rummy Server, 只有一个协议
       {name: "drawCardPos", type: T.INT, depends: function(ctx){ return ctx.ret == 0 && (ctx.state == 1) } },
       {name: "dropCard", type: T.BYTE, depends: function(ctx){ return ctx.ret == 0 && (ctx.state == 1) } },
       {name: "magicCard", type: T.BYTE, depends: function(ctx){ return ctx.ret == 0 && (ctx.state == 1) } },
+      {name: "finishCard", type: T.BYTE, depends: function(ctx){ return ctx.ret == 0 && (ctx.state == 1) } },
       {name: "heapCardNum", type: T.INT, depends: function(ctx){ return ctx.ret == 0 && (ctx.state == 1) } },
       {name: "operUid", type: T.INT, depends: function(ctx){ return ctx.ret == 0 && (ctx.state == 1) } },
       {name: "leftOperSec", type: T.INT, depends: function(ctx){ return ctx.ret == 0 && (ctx.state == 1) } },
@@ -209,7 +216,7 @@ let CommandConfig = { // Rummy Server, 只有一个协议
           {name: "isDrop", type: T.BYTE},
           {name: "isNeedDeclare", type: T.BYTE},
           {name: "isFinishDeclare", type: T.BYTE},
-          {name: "groups", type: T.ARRAY, lengthType: T.BYTE, depends: function(ctx){ return ctx.ret == 0 && (ctx.state == 1) },
+          {name: "groups", type: T.ARRAY, lengthType: T.BYTE,
             fmt: [
               {name: "cards", type: T.ARRAY, lengthType: T.BYTE, 
                 fmt: [
@@ -220,7 +227,6 @@ let CommandConfig = { // Rummy Server, 只有一个协议
           },
         ]
       },
-      {name: "finishCard", type: T.BYTE, depends: function(ctx){ return ctx.ret == 0 && (ctx.state == 1) } },
     ]
   },
   [CmdDef.SVR_EXIT_ROOM]: {

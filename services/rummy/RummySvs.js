@@ -3,6 +3,7 @@ var self = RummySvs;
 
 var myConf = require('../../config/MyConf');
 const RummyConst = require('../../model/rummy/RummyConst');
+const { Player } = require('../../model/rummy/RummyPlayer');
 const RummyUtil = require('../../model/rummy/RummyUtil');
 var rummySvr = require(myConf.paths.model + '/rummy/RummySvr');
 
@@ -11,8 +12,22 @@ const EVENT_NAMES = require(myConf.paths.common + "/event/EventNames");
 const eventMgr = require(myConf.paths.common + "/event/EventMgr");
 
 RummySvs.start = function() {
+    eventMgr.on(EVENT_NAMES.USER_LOGIN, function(data) { self.onUserLogin(data) } );
     eventMgr.on(EVENT_NAMES.RECIEVE_PKG, function(data) { self.onPackageReceived(data) } );
     rummySvr.init();
+}
+
+RummySvs.onUserLogin = function(uid) {
+    let table = rummySvr.queryTableByUid(uid)
+    if (table) {
+        let player = table.getPlayerByUid(uid);
+        if (player.getPlayState() == RummyConst.PLAYER_STATE_PLAY) {
+            eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: uid, prePkg: {
+                cmd: CmdDef.SVR_HALL_LOGIN,
+                ret: 1, // needReconnect
+            }});
+        }
+    }
 }
 
 RummySvs.onPackageReceived = function(parsedPkg) {
@@ -147,9 +162,7 @@ RummySvs.doCliDeclare = function(parsedPkg) {
         console.log("no table found!")
         return;
     }
-    console.log("parsedPkg.groups", parsedPkg.groups);
     let refinedGroups = refineGroups_(parsedPkg.groups);
-    console.log("refinedGroups", refinedGroups);
     let retParams = table.doPlayerDeclare(parsedPkg.uid, refinedGroups);
     self.doSendDeclare(parsedPkg.uid, retParams);
     if (retParams.isFirstValidDeclare || retParams.tryFirstFailDeclare) { // only when first declare player, send declare cast.
@@ -216,7 +229,7 @@ RummySvs.doCliUploadGroups = function(parsedPkg) {
     }
     let player = table.getPlayerByUid(parsedPkg.uid);
     let refinedGroups = refineGroups_(parsedPkg.groups);
-    let isValid = player.checkAndSaveCliGroups(refinedGroups);
+    let isValid = player.checkAndSaveCliGroups(refinedGroups, parsedPkg.drawCardPos);
     // test begin
     RummyUtil.judgeGroups(refinedGroups, table.getMagicCard());
     // test end
@@ -259,6 +272,33 @@ RummySvs.doSendEnterRoom = function(sendUid, table) {
         retPrePkg.players.push(player);
     }
     retPrePkg.ret = 0;
+    if (table.getState() == RummyConst.TABLE_STATE_PLAY) {
+        let sendPlayer = table.getPlayerByUid(sendUid);
+        retPrePkg.groups = derefineGroups_(sendPlayer.getGroups());
+        retPrePkg.drawCardPos = sendPlayer.getDrawCardPos();
+        retPrePkg.dropCard = table.getFirstDropCard();
+        retPrePkg.magicCard = table.getMagicCard();
+        retPrePkg.finishCard = table.getFinishCard();
+        retPrePkg.heapCardNum = table.getNewSlotCardNum();
+        retPrePkg.operUid = table.getLastOpUid();
+        retPrePkg.leftOperSec = table.getLeftOpTime() - 1; // minus 1 second for better approxiamation
+        retPrePkg.users = new Array();
+        table.getPlayers().forEach(player => {
+            if (player.getPlayState() == RummyConst.PLAYER_STATE_PLAY || player.getPlayState() == RummyConst.PLAYER_STATE_DROP) {
+                let pp = {};
+            
+                pp.uid = player.getUid();
+                pp.operStatus = (pp.uid == table.getLastOpUid()) ? table.getOpStage() : 0;
+                pp.isDrop = (player.getPlayState() == RummyConst.PLAYER_STATE_DROP) ? 1 : 0;
+                let need1 = (pp.uid == table.getLastOpUid() && table.getOpStage() == RummyConst.OP_STAGE_FINISH && table.getLeftOpTime() > 0);
+                let need2 = (table.getOpStage() == RummyConst.OP_STAGE_LEFT_DECLARE && player.getPlayState() == RummyConst.PLAYER_STATE_PLAY && !player.isFinishDeclare());
+                pp.isNeedDeclare = (need1 || need2) ? 1 : 0;
+                pp.isFinishDeclare = player.isFinishDeclare() ? 1 : 0;
+                pp.groups = player.isFinishDeclare() ? derefineGroups_(player.getGroups()) : new Array();
+                retPrePkg.users.push(pp);
+            }
+        });
+    }
     eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: sendUid, prePkg: retPrePkg});
 }
 
@@ -502,8 +542,6 @@ exports.doCastGameOverResult = function(tid) {
         }
     });
     retPrePkg.endtype = (table.hasValidDeclare()) ? 1 : 0;
-
-    console.log("doCastGameOverResult", retPrePkg)
 
     let players = table.getPlayers();
     players.forEach(player => {

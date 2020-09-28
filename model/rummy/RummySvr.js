@@ -50,6 +50,7 @@ RummySvr.queryTableByUid = function(uid) {
     if (tid) {
         return self.getTable(tid);
     }
+    return null;
 }
 
 RummySvr.destroyTable = function(params, callback) {

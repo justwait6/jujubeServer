@@ -17,7 +17,6 @@ RummyConst.TABLE_LEVEL_BIG = 3;
 RummyConst.TABLE_STATE_NOT_PLAY = 0;
 RummyConst.TABLE_STATE_PLAY = 1;
 RummyConst.TABLE_STATE_COUNTDOWN = 2;
-RummyConst.TABLE_STATE_CHOOSE_DEALER = 3;
 
 RummyConst.OP_NO_STAGE = 0;
 RummyConst.OP_STAGE_DRAW = 1;

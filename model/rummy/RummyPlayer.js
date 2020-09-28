@@ -118,7 +118,7 @@ class Player {
         this.groups_ = groups
     }
     getGroups() {
-        return this.groups_ || this.mCards_
+        return this.groups_;
     }
     insertCard(card) {
         this.mCards_.push(card);
@@ -130,7 +130,13 @@ class Player {
         }
         this.mCards_.splice(idx, 1);
     }
-    checkAndSaveCliGroups(groups) {
+    setDrawCardPos(cliDrawPos) {
+        this.clidDrawPos_ = cliDrawPos;
+    }
+    getDrawCardPos() {
+        return this.clidDrawPos_ || -1;
+    }
+    checkAndSaveCliGroups(groups, cliDrawPos) {
         let cliCards = new Array();
         groups.forEach(group => {
             for (let i = 0; i < group.length; i++) {
@@ -149,7 +155,8 @@ class Player {
             }
         }
         isValid = true
-        this.groups_ = groups; // save if valid
+        this.setGroups(groups); // save if valid
+        this.setDrawCardPos(cliDrawPos);
         return isValid;
     }
 }

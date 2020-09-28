@@ -46,6 +46,12 @@ class Table {
     getMagicCard() {
         return this.magicCard_;
     }
+    setFinishCard(cardUint) {
+        this.finishCard_ = cardUint;
+    }
+    getFinishCard() {
+        return this.finishCard_ || -1;
+    }
     setFirstDropCard(cardUint) {
         this.firstDropCard_ = cardUint;
     }
@@ -104,6 +110,29 @@ class Table {
     }
     getLastOpSeatId() {
         return this.lastOpSeatId_;
+    }
+    getLastOpUid() {
+        let opSeatId = this.getLastOpSeatId();
+        if (opSeatId >= 0) {
+            let player = this.getPlayerBySeatId(opSeatId);
+            if (player.getPlayState() == RummyConst.PLAYER_STATE_PLAY && !player.isFinishDeclare()) {
+                return player.getUid();
+            }
+        }
+        return -1;
+    }
+    startOpTimeTick(time) {
+        this.clearOpTimeTick();
+        this.leftOpTime_ = time;
+        this.timeTickId_ = setInterval(() => {
+            this.leftOpTime_--;
+        }, 1000);
+    }
+    clearOpTimeTick() {
+        clearInterval(this.timeTickId_);
+    }
+    getLeftOpTime() {
+        return this.leftOpTime_ || -1;
     }
     setLastDrawCard(card) {
         this.lastDrawCard_ = card;
@@ -277,7 +306,7 @@ class Table {
 
     doGameStart() {
         // 选庄家
-        this.setState(RummyConst.TABLE_STATE_CHOOSE_DEALER);
+        this.setState(RummyConst.TABLE_STATE_PLAY);
         
         let playerSeats = this.getPlayerSeats();
         playerSeats.sort();
@@ -313,7 +342,6 @@ class Table {
         cards = RummyUtil.shuffleCards(cards);
 
         this.setMagicCard(cards.splice(0, 1)[0]);
-        this.setFirstDropCard(cards.splice(0, 1)[0]);
         this.players_.forEach((player) => {
             if (player.getPlayState() == RummyConst.PLAYER_STATE_PLAY) {
                 player.setCards(cards.splice(0, RummyConst.PLAYER_INIT_CARD_NUM));
@@ -324,9 +352,8 @@ class Table {
         });
 
         this.setNewSlotCards(cards);
-        let oldCards = new Array();
-        oldCards.push(this.getFirstDropCard());
-        this.setOldSlotCards(oldCards);
+        this.setOldSlotCards(new Array());
+        this.cardToOldSlot_(cards.splice(0, 1)[0]);
 
         this.players_.forEach((player) => {
             if (player.getPlayState() == RummyConst.PLAYER_STATE_PLAY) {
@@ -352,19 +379,16 @@ class Table {
         let playerSeats = this.getPlayerSeats();
         playerSeats.sort();
         // find current user, counterclock
-        let opUid = -1;
+        let opSeatId = -1;
         let idx = playerSeats.indexOf(this.getLastOpSeatId());
         for (let i = 0; i < playerSeats.length; i++) {
             idx = (idx > 0) ? (idx - 1) : (playerSeats.length - 1);
             let nextPlayer = this.getPlayerBySeatId(playerSeats[idx]);
             if ((nextPlayer) && (nextPlayer.getPlayState() == RummyConst.PLAYER_STATE_PLAY)) {
-                opUid = nextPlayer.getUid();
-                this.setLastOpSeatId(nextPlayer.getSeatId());
+                opSeatId = nextPlayer.getSeatId();
                 break;
             }
         }
-
-        console.log(this.getPlayers())
         
         // broadcast current user turn
         if (this.getCurPlayersNum() < 2) {
@@ -372,9 +396,10 @@ class Table {
             this.checkDropGameEnd_();
             this.isUserTurnChecking_ = false;
             return;
-        } else if (opUid != -1) {
-            this.getPlayerByUid(opUid).triggerRound();
-            RummySvs.doCastUserTurn(this.getTid(), opUid, RummyConst.PLAYER_OP_SECOND);
+        } else if (opSeatId != -1) {
+            this.setLastOpSeatId(opSeatId);
+            this.getPlayerBySeatId(opSeatId).triggerRound();
+            RummySvs.doCastUserTurn(this.getTid(), this.getLastOpUid(), RummyConst.PLAYER_OP_SECOND);
         } else {
             console.log("No player turn ... no turn")
             this.isUserTurnChecking_ = false;
@@ -383,6 +408,7 @@ class Table {
 
         // deal cards anim time
         this.doClearUserTurn_();
+        this.startOpTimeTick(RummyConst.PLAYER_OP_SECOND);
         this.userTurnDelayId_ = setTimeout(() => {
             this.doClearUserTurn_();
             this.doUserTurnTimeout();
@@ -396,7 +422,7 @@ class Table {
     }
 
     doUserTurnTimeout() {
-        console.log("todo, user turn timeout...", this.getOpStage())
+        this.clearOpTimeTick();
         let opPlayer = this.getPlayerBySeatId(this.getLastOpSeatId());
         if (this.getOpStage() == RummyConst.OP_STAGE_DRAW) {
             this.doCheckUserTurn(); // audo pass if user is in draw card stage
@@ -407,9 +433,7 @@ class Table {
             // [RummySvs.doAutoDiscard] logic later trigers [doPlayerDiscard] logic,
             // which already has [doCheckUserTurn]
         } else if (this.getOpStage() == RummyConst.OP_STAGE_FINISH) {
-            let opSeatId = this.getLastOpSeatId();
-            let finishPlayer = this.getPlayerBySeatId(opSeatId);
-            RummySvs.doAutoDeclare(finishPlayer.getUid(), finishPlayer.getGroups());
+            RummySvs.doAutoDeclare(opPlayer.getUid(), opPlayer.getGroups());
         } else if (this.getOpStage() == RummyConst.OP_STAGE_LEFT_DECLARE) {
             this.getPlayers().forEach(player => {
                 if (player.getPlayState() == RummyConst.PLAYER_STATE_PLAY && !player.isFinishDeclare()) {
@@ -488,8 +512,10 @@ class Table {
             return retParams;
         }
 
-        this.doClearUserTurn_()
+        this.doClearUserTurn_();
         this.setOpStage(RummyConst.OP_STAGE_FINISH);
+        this.startOpTimeTick(RummyConst.PLAYER_FINISH_SECOND);
+        this.setFinishCard(finishCard);
         this.userFinishDelayId_ = setTimeout(() => {
             clearTimeout(this.userFinishDelayId_);
             this.doUserTurnTimeout();
@@ -519,7 +545,7 @@ class Table {
             }
         }
         let judgeInfo = RummyUtil.judgeGroups(groups, this.getMagicCard());
-        console.log("judgeInfo", judgeInfo);
+        
         if (!this.hasValidDeclare() && judgeInfo.valid) { // the first valid declare player
             this.doFirstValidDeclare_(uid);
             
@@ -552,6 +578,7 @@ class Table {
         this.doScoreAndMoneyCalc_();
         this.setOpStage(RummyConst.OP_STAGE_LEFT_DECLARE);
 
+        this.startOpTimeTick(RummyConst.PLAYER_LEFT_DECLARE_SECOND);
         this.userLeftDeclareDelayId_ = setTimeout(() => {
             clearTimeout(this.userLeftDeclareDelayId_);
             this.doUserTurnTimeout();
@@ -562,6 +589,8 @@ class Table {
         clearTimeout(this.userFinishDelayId_);
         let losePlayer = this.getPlayerByUid(uid);
         losePlayer.setFinishDeclare(true);
+        this.cardToOldSlot_(this.getFinishCard());
+        this.setFinishCard(-1);
         RummySvs.doAutoCliDrop(uid, RummyConst.PLAYER_DROP_WRONG_DECLARE);
     }
 
@@ -582,7 +611,6 @@ class Table {
         if (this.getLastOpSeatId() != player.getSeatId()) { // not user's turn
             return retParams;
         }
-        console.log("opstage: ", this.getOpStage())
         // [drop] operation can only be done in draw card stage or finish stage(wrong declare in later situation)
         if (!(this.getOpStage() == RummyConst.OP_STAGE_DRAW || this.getOpStage() == RummyConst.OP_STAGE_FINISH)) {
             retParams.ret = 2;
@@ -646,7 +674,6 @@ class Table {
             }
             if (pState == RummyConst.PLAYER_STATE_DROP || (pState == RummyConst.PLAYER_STATE_PLAY && player.isFinishDeclare())) {
                 if (!isWinner) {
-                    console.log("hh", player.getUid(), player.getScore(), this.getSmallbet())
                     winnerWinMoney += player.getScore() * this.getSmallbet();
                 }
             }
