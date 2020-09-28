@@ -114,6 +114,7 @@ let CommandConfig = { // Rummy Server, 只有一个协议
           },
         ]
       },
+      {name: "drawCardPos", type: T.INT},
     ]
   },
   [CmdDef.CLI_RUMMY_GET_DROP_CARDS]: {

@@ -15,30 +15,32 @@ class Table {
     constructor(tableId) {
         this.tableId_ = tableId;
         this.players_ = new Array();
+
+        this.resetTable_();
     }
     setTid(tableId) {
         this.tableId_ = tableId;
     }
     getTid() {
-        return this.tableId_ || -1;
+        return this.tableId_;
     }
     setLevel(level) {
         this.level_ = level;
     }
     getLevel() {
-        return this.level_ || -1;
+        return this.level_;
     }
     setState(tState) {
         this.tState_ = tState;
     }
     getState() {
-        return this.tState_ || RummyConst.TABLE_STATE_NOT_PLAY;
+        return this.tState_;
     }
     setSmallbet(smallbet) {
         this.smallbet_ = smallbet;
     }
     getSmallbet() {
-        return this.smallbet_ || 0;
+        return this.smallbet_;
     }
     setMagicCard(cardUint) {
         this.magicCard_ = cardUint;
@@ -50,7 +52,7 @@ class Table {
         this.finishCard_ = cardUint;
     }
     getFinishCard() {
-        return this.finishCard_ || -1;
+        return this.finishCard_;
     }
     setFirstDropCard(cardUint) {
         this.firstDropCard_ = cardUint;
@@ -73,63 +75,17 @@ class Table {
     getOldSlotCards() {
         return this.oldSlotCards_;
     }
-    drawSingleCard_(region) {
-        let card = -1;
-        if (region == 0) { // draw from new card area
-            let cardNum = this.getNewSlotCards().length;
-            card = (cardNum <= 0) ? -1 : this.newSlotCards_.splice(0, 1)[0];
-        } else if (region == 1) { // draw from old area
-            let cardNum = this.getOldSlotCards().length;
-            card = (cardNum <= 0) ? -1 : this.oldSlotCards_.splice(this.oldSlotCards_.length - 1, 1)[0];
-        }
-
-        if (region == 1 && card != -1) { // update first drop card if fetch from old region.
-            let fCard = (this.oldSlotCards_.length <= 0) ? -1 : this.oldSlotCards_[this.oldSlotCards_.length - 1];
-            this.setFirstDropCard(fCard);
-        }
-        return card;
-    }
-    cardToOldSlot_(card) {
-        this.oldSlotCards_.push(card);
-        this.setFirstDropCard(card);
-    }
-    setGameStartCountDown(time) {
-        this.gameStartCountDown_ = time;
-    }
-    getGameStartCountDown() {
-        return this.gameStartCountDown_
-    }
     setDealerUid(uid) {
         this.dUid_ = uid;
     }
     getDealerUid() {
-        return this.dUid_ || -1;
+        return this.dUid_;
     }
     setLastOpSeatId(seatId) {
         this.lastOpSeatId_ = seatId;
     }
     getLastOpSeatId() {
         return this.lastOpSeatId_;
-    }
-    getLastOpUid() {
-        let opSeatId = this.getLastOpSeatId();
-        if (opSeatId >= 0) {
-            let player = this.getPlayerBySeatId(opSeatId);
-            if (player.getPlayState() == RummyConst.PLAYER_STATE_PLAY && !player.isFinishDeclare()) {
-                return player.getUid();
-            }
-        }
-        return -1;
-    }
-    startOpTimeTick(time) {
-        this.clearOpTimeTick();
-        this.leftOpTime_ = time;
-        this.timeTickId_ = setInterval(() => {
-            this.leftOpTime_--;
-        }, 1000);
-    }
-    clearOpTimeTick() {
-        clearInterval(this.timeTickId_);
     }
     getLeftOpTime() {
         return this.leftOpTime_ || -1;
@@ -157,6 +113,46 @@ class Table {
     }
     hasValidDeclare() {
         return this.hasValidDeclare_;
+    }
+    startOpTimeTick(time) {
+        this.clearOpTimeTick();
+        this.leftOpTime_ = time;
+        this.timeTickId_ = setInterval(() => {
+            this.leftOpTime_--;
+        }, 1000);
+    }
+    clearOpTimeTick() {
+        clearInterval(this.timeTickId_);
+    }
+    getLastOpUid() {
+        let opSeatId = this.getLastOpSeatId();
+        if (opSeatId >= 0) {
+            let player = this.getPlayerBySeatId(opSeatId);
+            if (player && player.getPlayState() == RummyConst.PLAYER_STATE_PLAY && !player.isFinishDeclare()) {
+                return player.getUid();
+            }
+        }
+        return -1;
+    }
+    drawSingleCard_(region) {
+        let card = -1;
+        if (region == 0) { // draw from new card area
+            let cardNum = this.getNewSlotCards().length;
+            card = (cardNum <= 0) ? -1 : this.newSlotCards_.splice(0, 1)[0];
+        } else if (region == 1) { // draw from old area
+            let cardNum = this.getOldSlotCards().length;
+            card = (cardNum <= 0) ? -1 : this.oldSlotCards_.splice(this.oldSlotCards_.length - 1, 1)[0];
+        }
+
+        if (region == 1 && card != -1) { // update first drop card if fetch from old region.
+            let fCard = (this.oldSlotCards_.length <= 0) ? -1 : this.oldSlotCards_[this.oldSlotCards_.length - 1];
+            this.setFirstDropCard(fCard);
+        }
+        return card;
+    }
+    cardToOldSlot_(card) {
+        this.oldSlotCards_.push(card);
+        this.setFirstDropCard(card);
     }
     getPlayers() {
         return this.players_ || [];
@@ -261,19 +257,26 @@ class Table {
         return exitParams;
     }
 
-    doGameReady() {
+    setGameStartCountDown_(time) {
+        this.leftGameStartTime_ = time;
+    }
+
+    getGameStartCountDown_(time) {
+        return this.leftGameStartTime_;
+    }
+
+    triggerDoGameReady() {
         let tState = this.getState();
         let playerNum = this.getPlayers().length;
         let isOk = (tState == RummyConst.TABLE_STATE_NOT_PLAY && playerNum >= 2);
         if (!isOk) {
             return false;
         }
-        let leftTime = RummyConst.GAME_START_SECOND;
-        this.setGameStartCountDown(leftTime);
+        this.setGameStartCountDown_(RummyConst.GAME_START_SECOND);
         this.countDownLoopId_ = setInterval(() => {
-            leftTime = leftTime - 1;
-            if (leftTime >= 0) {
-                this.setGameStartCountDown(leftTime);
+            let leftTime = this.getGameStartCountDown_();
+            if (this.leftTime > 0) {
+                this.setGameStartCountDown_(--leftTime);
             }
         }, 1000);
         this.countDownDelayId_ = setTimeout(() => {
@@ -283,9 +286,14 @@ class Table {
         }, (RummyConst.GAME_START_SECOND) * 1000);
 
         this.setState(RummyConst.TABLE_STATE_COUNTDOWN);
-        this.setOpStage(RummyConst.OP_NO_STAGE);
 
-        return true;
+        this.getPlayers().forEach((player) => {
+            RummySvs.doSendGameStartCountDown(player.getUid(), this.getGameStartCountDown_());
+        });
+    }
+
+    reissueStartCountDown(uid) {
+        RummySvs.doSendGameStartCountDown(uid, this.getGameStartCountDown_());
     }
 
     checkCancelGameReady() {
@@ -301,12 +309,13 @@ class Table {
     cancelGameReady_() {
         clearTimeout(this.countDownDelayId_);
         clearInterval(this.countDownLoopId_);
-        this.setState(RummyConst.TABLE_STATE_NOT_PLAY);
+        this.resetTable_();
     }
 
     doGameStart() {
         // 选庄家
         this.setState(RummyConst.TABLE_STATE_PLAY);
+        this.getPlayers().forEach(player => {player.setPlayState(RummyConst.PLAYER_STATE_PLAY)});
         
         let playerSeats = this.getPlayerSeats();
         playerSeats.sort();
@@ -487,8 +496,6 @@ class Table {
             return retParams;
         }
         this.cardToOldSlot_(discardCard);
-        
-        this.doCheckUserTurn() // if discard card ok, check next operate user
 
         retParams.ret = 0;
         retParams.tid = this.getTid();
@@ -599,6 +606,7 @@ class Table {
         player.setFinishDeclare(true);
         this.doScoreAndMoneyCalc_();
         RummySvs.doCastGameOverResult(this.getTid());
+        this.delayCheckNewGame_(this.hasValidDeclare());
     }
 
     onCastDeclareFinish() {
@@ -608,21 +616,22 @@ class Table {
     doPlayerDrop(uid, dropType) {
         let retParams = {ret: 1};
         let player = this.getPlayerByUid(uid);
-        if (this.getLastOpSeatId() != player.getSeatId()) { // not user's turn
+        
+        if (dropType != RummyConst.PLAYER_DROP_BAD_BEHAVIOR) {
+            if (this.getLastOpSeatId() != player.getSeatId()) { // not user's turn
             return retParams;
-        }
-        // [drop] operation can only be done in draw card stage or finish stage(wrong declare in later situation)
-        if (!(this.getOpStage() == RummyConst.OP_STAGE_DRAW || this.getOpStage() == RummyConst.OP_STAGE_FINISH)) {
-            retParams.ret = 2;
-            return retParams;
+            }
+
+            // [drop] operation can only be done in draw card stage or finish stage(wrong declare in later situation)
+            if (!(this.getOpStage() == RummyConst.OP_STAGE_DRAW || this.getOpStage() == RummyConst.OP_STAGE_FINISH)) {
+                retParams.ret = 2;
+                return retParams;
+            }
         }
         if (!dropType) {
             dropType = (player.isFirstRound()) ? RummyConst.PLAYER_DROP_FIRST : RummyConst.PLAYER_DROP_LATER;
         }
         this.calcAndMarkDrop_(player.getUid(), dropType);
-        
-        this.doCheckUserTurn();
-
         retParams.ret = 0;
         retParams.tid = this.getTid();
         retParams.money = BigInt(0); // game over checkout, todo...
@@ -639,8 +648,10 @@ class Table {
                 }
             });
             this.setWinnerUid(leftOnePlayer.getUid());
+            this.setHasValidDeclare(false);
             this.doScoreAndMoneyCalc_();
             RummySvs.doCastGameOverResult(this.getTid());
+            this.delayCheckNewGame_(this.hasValidDeclare());
         }
     }
 
@@ -680,6 +691,46 @@ class Table {
         });
         winPlayer.setWinMoney(winnerWinMoney);
         winPlayer.setMoney(winPlayer.getMoney() + BigInt(winnerWinMoney));
+    }
+
+    delayCheckNewGame_(hasValidDeclare) {
+        let canNewGame = true;
+        if (hasValidDeclare) {
+            this.getPlayers().forEach(player => {
+                if (player.getPlayState() == RummyConst.PLAYER_STATE_PLAY && !player.isFinishDeclare()) {
+                    canNewGame = false;
+                }
+            });
+        }
+
+        if (canNewGame) {
+            this.newGameDelayId_ = setTimeout(() => {
+                clearTimeout(this.newGameDelayId_);
+                this.getPlayers().forEach(player => {
+                    player.reset();
+                })
+                this.resetTable_();
+                this.triggerDoGameReady();
+            }, 100);
+        }
+    }
+
+    resetTable_() {
+        this.setLevel(1); // todo later
+        this.setState(RummyConst.TABLE_STATE_NOT_PLAY);
+        this.setSmallbet(0); // todo later
+        this.setMagicCard(-1);
+        this.setFinishCard(-1);
+        this.setFirstDropCard(-1);
+        this.setNewSlotCards(new Array());
+        this.setOldSlotCards(new Array());
+        this.setDealerUid(-1);
+        this.setLastOpSeatId(-1);
+        this.clearOpTimeTick();
+        this.setLastDrawCard(-1);
+        this.setOpStage(RummyConst.OP_NO_STAGE);
+        this.setWinnerUid(-1);
+        this.setHasValidDeclare(false);
     }
 }
 RummyTable.Table = Table;

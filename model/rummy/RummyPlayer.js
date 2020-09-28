@@ -9,10 +9,12 @@ class Player {
         this.setMoney(dUserinfo.money);
         this.setGold(dUserinfo.gold);
         this.userinfo_ = userinfo;
+
+        this.reset();
     }
 
     getUid() {
-        return this.uid_ || -1;
+        return this.uid_;
     }
 
     setSeatId(seatId) {
@@ -28,7 +30,7 @@ class Player {
     }
 
     getMoney() {
-        return BigInt(this.money_ || 0);
+        return BigInt(this.money_);
     }
 
     setWinMoney(money) {
@@ -36,7 +38,7 @@ class Player {
     }
 
     getWinMoney() {
-        return BigInt(this.winMoney_ || 0);
+        return BigInt(this.winMoney_);
     }
 
     setScore(score) {
@@ -52,12 +54,15 @@ class Player {
     }
 
     getGold() {
-        return BigInt(this.gold_ || 0);
+        return BigInt(this.gold_);
     }
 
     triggerRound() {
-        this.curRound = this.curRound || 0;
         this.curRound++;
+    }
+
+    setRound(round) {
+        this.curRound = round;
     }
 
     isFirstRound() {
@@ -69,7 +74,7 @@ class Player {
     }
 
     getDropType() {
-        this.dropType_ || RummyConst.PLAYER_NO_DROP;
+        this.dropType_;
     }
 
     setFinishDeclare(finishDeclare) {
@@ -85,7 +90,7 @@ class Player {
     }
 
     getPlayState() {
-        return this.state_ || 0;
+        return this.state_;
     }
 
     setUserinfo(userinfo) {
@@ -134,7 +139,7 @@ class Player {
         this.clidDrawPos_ = cliDrawPos;
     }
     getDrawCardPos() {
-        return this.clidDrawPos_ || -1;
+        return this.clidDrawPos_;
     }
     checkAndSaveCliGroups(groups, cliDrawPos) {
         let cliCards = new Array();
@@ -158,6 +163,20 @@ class Player {
         this.setGroups(groups); // save if valid
         this.setDrawCardPos(cliDrawPos);
         return isValid;
+    }
+
+    reset() {
+        this.setWinMoney(0);
+        this.setScore(0);
+        this.setGold(0); // todo later
+        this.setRound(0);
+        this.setDropType(RummyConst.PLAYER_NO_DROP);
+        this.setFinishDeclare(false);
+        this.setPlayState(RummyConst.PLAYER_STATE_OFF);
+        this.setChooseDCard(-1);
+        this.setCards(new Array());
+        this.setGroups(new Array());
+        this.setDrawCardPos(-1);
     }
 }
 

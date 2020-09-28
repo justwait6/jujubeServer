@@ -77,20 +77,11 @@ RummySvs.doCliEnterRoom = function(parsedPkg) {
     self.doSendEnterRoom(parsedPkg.uid, table);
 
     // 广播用户坐下
-    self.doCastSitDown(parsedPkg.tid, parsedPkg.uid)
+    self.doCastSitDown(parsedPkg.tid, parsedPkg.uid);
 
-    // 桌子状态
-    let tState = table.getState();
-    if (tState == RummyConst.TABLE_STATE_NOT_PLAY) {
-        if (table.doGameReady()) {
-            let players = table.getPlayers();
-            let time = table.getGameStartCountDown();
-            players.forEach((player) => {
-                self.doSendGameStartCountDown(player.getUid(), time);
-            });
-        }
-    } else if (tState == RummyConst.TABLE_STATE_COUNTDOWN) {
-        self.doSendGameStartCountDown(parsedPkg.uid, table.getGameStartCountDown());
+    table.triggerDoGameReady();
+    if (table.getState() == RummyConst.TABLE_STATE_COUNTDOWN) {
+        table.reissueStartCountDown(parsedPkg.uid);
     }
 }
 
@@ -136,6 +127,8 @@ RummySvs.doCliDiscard = function(parsedPkg) {
     if (retParams.ret == 0) {
         self.doCastDiscard(parsedPkg.uid, retParams);
     }
+
+    table.doCheckUserTurn() // if discard card ok, check next operate user
 }
 
 exports.doAutoDiscard = function(uid, discardCard, cliIdx) {
@@ -215,6 +208,7 @@ RummySvs.doCliDrop = function(parsedPkg) {
     if (retParams.ret == 0) {
         self.doCastDrop(parsedPkg.uid, retParams);
     }
+    table.doCheckUserTurn();
 }
 
 exports.doAutoCliDrop = function(uid, dropType) {
@@ -347,10 +341,10 @@ RummySvs.doCastUserExit = function(tid, uid) {
         if (sendUid != uid) {
             eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: sendUid, prePkg: retPrePkg});   
         }
-    })
+    });
 }
 
-RummySvs.doSendGameStartCountDown = function(uid, time) {
+exports.doSendGameStartCountDown = function(uid, time) {
     eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: uid, prePkg: {
         cmd: CmdDef.SVR_RUMMY_COUNTDOWN,
         leftSec: time,
