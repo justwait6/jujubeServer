@@ -23,9 +23,21 @@ router.post('/basicInfo', function(req, res, next) {
   
 });
 
-/* POST MoenyTree own tree info */
-router.post('/ownTreeInfo', function(req, res, next) {
-  
+/* POST MoenyTree my tree info */
+router.post('/treeInfo', function(req, res, next) {
+  console.log(req.body)
+  res.json(myUtil.retObj({treeUid: req.body.treeUid}, 0, "")).send();
+});
+
+/* POST MoenyTree my tree info */
+router.post('/waterTree', function(req, res, next) {
+  console.log(req.body)
+  res.json(myUtil.retObj({treeUid: req.body.treeUid}, 0, "")).send();
+});
+
+/* POST MoenyTree my tree info */
+router.post('/friendRank', function(req, res, next) {
+  res.json(myUtil.retObj({}, 0, "")).send();
 });
 
 /* POST MoenyTree own tree info */
