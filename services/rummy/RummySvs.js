@@ -4,6 +4,7 @@ var self = RummySvs;
 var myConf = require('../../config/MyConf');
 const RoomConst = require('../../model/rummy/RoomConst');
 const RoomUtil = require('../../model/rummy/RoomUtil');
+const SubGameDef = require('../../model/subGame/SubGameDef');
 var rummySvr = require(myConf.paths.model + '/rummy/RummySvr');
 
 const CmdDef = require(myConf.paths.common + "/protocol/CommandDef");
@@ -12,7 +13,7 @@ const eventMgr = require(myConf.paths.common + "/event/EventMgr");
 
 RummySvs.start = function() {
     eventMgr.on(EVENT_NAMES.USER_LOGIN, function(data) { self.onUserLogin(data) } );
-    eventMgr.on(EVENT_NAMES.RECIEVE_PKG, function(data) { self.onPackageReceived(data) } );
+    eventMgr.on(EVENT_NAMES.RECIEVE_RUMMY_PKG, function(data) { self.onPackageReceived(data) } );
     rummySvr.init();
 }
 
@@ -74,6 +75,8 @@ RummySvs.doCliEnterRoom = function(parsedPkg) {
 
     // 登录返回
     self.doSendEnterRoom(parsedPkg.uid, table);
+    eventMgr.emit(EVENT_NAMES.USER_ENTER_ROOM, {uid: parsedPkg.uid, gameId: SubGameDef.RUMMY});
+
 
     // 广播用户坐下
     self.doCastSitDown(parsedPkg.tid, parsedPkg.uid);
@@ -95,10 +98,12 @@ RummySvs.doCliExitRoom = function(parsedPkg) {
     if (retParams.ret == 0) {
         self.doCastUserExit(parsedPkg.tid, parsedPkg.uid);
         rummySvr.deleteUidTid(parsedPkg.uid, parsedPkg.tid);
+        eventMgr.emit(EVENT_NAMES.USER_EXIT_ROOM, {uid: parsedPkg.uid});
     }
 }
 
 RummySvs.doCliDraw = function(parsedPkg) {
+    console.log("RummySvs doCliDraw", parsedPkg)
     let table = rummySvr.queryTableByUid(parsedPkg.uid);
     if (!table) {
         console.log("no table found!")
@@ -246,7 +251,7 @@ RummySvs.doCliGetDropCards = function(parsedPkg) {
 }
 
 RummySvs.doSendEnterRoom = function(sendUid, table) {
-    let retPrePkg = {cmd: CmdDef.SVR_ENTER_ROOM};
+    let retPrePkg = {cmd: CmdDef.SVR_ENTER_ROOM, gameId: SubGameDef.RUMMY};
     retPrePkg.tid = table.getTid();
     retPrePkg.level = table.getLevel();
     retPrePkg.state = table.getState();

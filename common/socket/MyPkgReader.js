@@ -1,10 +1,14 @@
 const CmdConfig = require("../protocol/CommandConfig");
 const T = require("./PkgDataType");
 const MyByteMap = require("./MyByteMap");
+var myConf = require("../../config/MyConf");
+const SubGameDef = require(myConf.paths.model + "/subGame/SubGameDef");
+const RummyCmdConfig = require("../protocol/RummyCmdConfig");
+const DizhuCmdConfig = require("../protocol/DizhuCmdConfig");
 
 let MyPkgReader = {}
 
-let HEAD_LEN = 11;
+let HEAD_LEN = 15;
 let _pkgCache = [];
 let _isParsing = false;
 
@@ -30,9 +34,13 @@ MyPkgReader.consume = function() {
   self.myByteDecode(rawPkg);
 
   let parsePkg = {}
-  parsePkg.cmd = rawPkg.readInt32BE(6);
+  parsePkg.gameId = rawPkg.readInt32BE(6);
+  parsePkg.cmd = rawPkg.readInt32BE(10);
 
   let curCmdConf = CmdConfig[parsePkg.cmd];
+  if (!curCmdConf) {
+    curCmdConf = MyPkgReader.getSubConf(parsePkg.gameId, parsePkg.cmd);
+  }
   if (curCmdConf && curCmdConf.fmt) {
     let curPos = HEAD_LEN;
     self.parseFmt(rawPkg, curPos, curCmdConf.fmt, parsePkg);
@@ -135,6 +143,16 @@ MyPkgReader.myByteDecode = function(rawPkg) {
     let original = MyByteMap.SocketDecode.indexOf(toReplace);
     rawPkg.writeUInt8(original, i);
   }
+}
+
+MyPkgReader.getSubConf = function(gameId, cmd) {
+  let subConf = null;
+  if (gameId == SubGameDef.RUMMY) {
+    subConf = RummyCmdConfig[cmd];
+  } else if (gameId == SubGameDef.DIZHU) {
+    subConf = DizhuCmdConfig[cmd];
+  }
+  return subConf;
 }
 
 var self = MyPkgReader;

@@ -2,12 +2,13 @@ let UserSocketMgr = {};
 var self = UserSocketMgr;
 
 UserSocketMgr.uSktList = {};
-UserSocketMgr.uBufferList = {};
 
 var myConf = require('../../config/MyConf');
+const CmdDef = require("../protocol/CommandDef");
 const myPkgBuilder = require(myConf.paths.common + "/socket/MyPkgBuilder");
 const eventMgr = require(myConf.paths.common + "/event/EventMgr");
 const EVENT_NAMES = require("../event/EventNames");
+var userSubGameMgr = require(myConf.paths.model + "/subGame/UserSubGameMgr");
 eventMgr.on(EVENT_NAMES.PROCESS_OUT_PKG, function(data) {self.asyncSendPack(data)} );
 
 UserSocketMgr.bind = function(uid, socket) {
@@ -29,7 +30,7 @@ UserSocketMgr.unbindBySocket = function(socket) {
 }
 
 UserSocketMgr.unbindByUid = function(uid) {
-  self.bind(uid, null);
+  self.uSktList[uid] = null;
 }
 
 UserSocketMgr.findUserBySocket = function(socket) {
@@ -43,9 +44,12 @@ UserSocketMgr.findUserBySocket = function(socket) {
 }
 
 UserSocketMgr.asyncSendPack = function(data) {
+  if (!data.prePkg.gameId) {
+    data.prePkg.gameId = userSubGameMgr.getSubGameId(data.uid);
+  }
   myPkgBuilder.asyncBuild(data.prePkg, (packet) => {
     packet && self._send(data.uid, packet);
-  })
+  });
 }
 
 UserSocketMgr._send = function(uid, buf) {

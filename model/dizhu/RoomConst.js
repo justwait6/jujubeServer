@@ -1,10 +1,23 @@
 let RoomConst = new Array();
 
-// dizhu game
+// game
 RoomConst.GAME_ID = 2000;
 
-// dizhu server
+// server
 RoomConst.MAX_ALLOC_TABLE = 1;
 RoomConst.MAX_PRE_ALLOC_TABLE = 1;
+
+// table
+
+RoomConst.MAX_TABLE_PLAYERS = 3;
+
+RoomConst.TABLE_STATE_NOT_PLAY = 0;
+RoomConst.TABLE_STATE_PLAY = 1;
+RoomConst.TABLE_STATE_COUNTDOWN = 2;
+
+// player
+RoomConst.PLAYER_STATE_OFF = 1; // not in the play
+RoomConst.PLAYER_STATE_DROP = 2; // in the play, but dropped
+RoomConst.PLAYER_STATE_PLAY = 3; // in the play and not drop
 
 module.exports = RoomConst;

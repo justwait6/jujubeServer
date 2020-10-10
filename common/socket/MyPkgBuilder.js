@@ -2,6 +2,11 @@ const CmdConfig = require("../protocol/CommandConfig");
 const T = require("./PkgDataType");
 const MyByteMap = require("./MyByteMap");
 
+var myConf = require("../../config/MyConf");
+const SubGameDef = require(myConf.paths.model + "/subGame/SubGameDef");
+const RummyCmdConfig = require("../protocol/RummyCmdConfig");
+const DizhuCmdConfig = require("../protocol/DizhuCmdConfig");
+
 let MyPkgBuilder = {}
 let _buffer = Buffer.alloc(1000, 0);
 let _bufferLength = _buffer.length;
@@ -9,15 +14,16 @@ let _buildCache = [];
 let _isBuilding = false;
 let _bufferEndPos = 0;
 
-let HEAD_LEN = 11;
+let HEAD_LEN = 15;
 
-MyPkgBuilder.createHeader = function(buf, cmd) {
+MyPkgBuilder.createHeader = function(buf, gameId, cmd) {
   // header length, takes 4 bytes, set to zero temporarily
   buf.writeInt32BE(0, 0);
   // 'LW', in consistant with client
   buf.write('LW', 4, 'ascii');
   // command, in consistant with client
-  buf.writeInt32BE(cmd, 6);
+  buf.writeInt32BE(gameId, 6);
+  buf.writeInt32BE(cmd, 10);
   // check code, default 0
   buf.writeInt8(0, 10);
 }
@@ -119,8 +125,12 @@ MyPkgBuilder.consume = function() {
   let buildConf = _buildCache.pop();
   let params = buildConf.params;
   let callback = buildConf.callback;
-  self.createHeader(_buffer, params.cmd || 0);
-  self.createBody(_buffer, CmdConfig[params.cmd], params);
+  self.createHeader(_buffer, params.gameId || SubGameDef.NONE, params.cmd || 0);
+  let curCmdConf = CmdConfig[params.cmd];
+  if (!curCmdConf) {
+    curCmdConf = MyPkgBuilder.getSubCurConf(params.gameId, params.cmd);
+  }
+  self.createBody(_buffer, curCmdConf, params);
 
   // attach calc package lengh
   let buildLen = _bufferEndPos - 0;
@@ -182,6 +192,16 @@ MyPkgBuilder.myByteEncode = function(rawPkg) {
     let original = MyByteMap.SocketEncode.indexOf(toReplace);
     rawPkg.writeUInt8(original, i);
   }
+}
+
+MyPkgBuilder.getSubCurConf = function(gameId, cmd) {
+  let subConf = null;
+  if (gameId == SubGameDef.RUMMY) {
+    subConf = RummyCmdConfig[cmd];
+  } else if (gameId == SubGameDef.DIZHU) {
+    subConf = DizhuCmdConfig[cmd];
+  }
+  return subConf;
 }
 
 var self = MyPkgBuilder;
