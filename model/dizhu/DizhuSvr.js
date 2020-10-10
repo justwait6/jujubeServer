@@ -2,9 +2,9 @@ let DizhuSvr = {};
 var self = DizhuSvr;
 
 var myConf = require('../../config/MyConf');
-var DizhuTable = require(myConf.paths.model + '/dizhu/DizhuTable');
+var RoomTable = require(myConf.paths.model + '/dizhu/RoomTable');
 
-const DizhuConst = require(myConf.paths.model + '/dizhu/DizhuConst');
+const RoomConst = require(myConf.paths.model + '/dizhu/RoomConst');
 
 DizhuSvr.init = function() {
     self.tableList_ = new Array();
@@ -13,8 +13,8 @@ DizhuSvr.init = function() {
 }
 
 DizhuSvr.preAllocTable = function() {
-	for (i = 0; i < DizhuConst.MAX_PRE_ALLOC_TABLE; i++) {
-        self.tableList_.push(new DizhuTable.Table(i + 1));
+	for (i = 0; i < RoomConst.MAX_PRE_ALLOC_TABLE; i++) {
+        self.tableList_.push(new RoomTable.Table(i + 1));
     }
 }
 

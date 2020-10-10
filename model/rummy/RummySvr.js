@@ -2,9 +2,9 @@ let RummySvr = {};
 var self = RummySvr;
 
 var myConf = require('../../config/MyConf');
-var RummyTable = require(myConf.paths.model + '/rummy/RummyTable');
+var RoomTable = require(myConf.paths.model + '/rummy/RoomTable');
 
-const RummyConst = require(myConf.paths.model + '/rummy/RummyConst');
+const RoomConst = require(myConf.paths.model + '/rummy/RoomConst');
 
 RummySvr.init = function() {
     self.tableList_ = new Array();
@@ -13,8 +13,8 @@ RummySvr.init = function() {
 }
 
 RummySvr.preAllocTable = function() {
-	for (i = 0; i < RummyConst.MAX_PRE_ALLOC_TABLE; i++) {
-        self.tableList_.push(new RummyTable.Table(i + 1));
+	for (i = 0; i < RoomConst.MAX_PRE_ALLOC_TABLE; i++) {
+        self.tableList_.push(new RoomTable.Table(i + 1));
     }
 }
 

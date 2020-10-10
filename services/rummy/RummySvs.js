@@ -2,9 +2,8 @@ let RummySvs = {};
 var self = RummySvs;
 
 var myConf = require('../../config/MyConf');
-const RummyConst = require('../../model/rummy/RummyConst');
-const { Player } = require('../../model/rummy/RummyPlayer');
-const RummyUtil = require('../../model/rummy/RummyUtil');
+const RoomConst = require('../../model/rummy/RoomConst');
+const RoomUtil = require('../../model/rummy/RoomUtil');
 var rummySvr = require(myConf.paths.model + '/rummy/RummySvr');
 
 const CmdDef = require(myConf.paths.common + "/protocol/CommandDef");
@@ -21,7 +20,7 @@ RummySvs.onUserLogin = function(uid) {
     let table = rummySvr.queryTableByUid(uid)
     if (table) {
         let player = table.getPlayerByUid(uid);
-        if (player.getPlayState() == RummyConst.PLAYER_STATE_PLAY) {
+        if (player.getPlayState() == RoomConst.PLAYER_STATE_PLAY) {
             eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: uid, prePkg: {
                 cmd: CmdDef.SVR_HALL_LOGIN,
                 ret: 1, // needReconnect
@@ -80,7 +79,7 @@ RummySvs.doCliEnterRoom = function(parsedPkg) {
     self.doCastSitDown(parsedPkg.tid, parsedPkg.uid);
 
     table.triggerDoGameReady();
-    if (table.getState() == RummyConst.TABLE_STATE_COUNTDOWN) {
+    if (table.getState() == RoomConst.TABLE_STATE_COUNTDOWN) {
         table.reissueStartCountDown(parsedPkg.uid);
     }
 }
@@ -89,7 +88,7 @@ RummySvs.doCliExitRoom = function(parsedPkg) {
     let table = rummySvr.getTable(parsedPkg.tid);    
     let retParams = table.doPlayerExit(parsedPkg.uid, parsedPkg.userinfo);
     let tState = table.getState();
-    if (tState == RummyConst.TABLE_STATE_COUNTDOWN) {
+    if (tState == RoomConst.TABLE_STATE_COUNTDOWN) {
         table.checkCancelGameReady();
     }
     self.doSendUserExit(parsedPkg.uid, retParams);
@@ -225,7 +224,7 @@ RummySvs.doCliUploadGroups = function(parsedPkg) {
     let refinedGroups = refineGroups_(parsedPkg.groups);
     let isValid = player.checkAndSaveCliGroups(refinedGroups, parsedPkg.drawCardPos);
     // test begin
-    RummyUtil.judgeGroups(refinedGroups, table.getMagicCard());
+    RoomUtil.judgeGroups(refinedGroups, table.getMagicCard());
     // test end
     let checkRet = (isValid) ? 0 : 1;
     eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: parsedPkg.uid, prePkg: {
@@ -266,7 +265,7 @@ RummySvs.doSendEnterRoom = function(sendUid, table) {
         retPrePkg.players.push(player);
     }
     retPrePkg.ret = 0;
-    if (table.getState() == RummyConst.TABLE_STATE_PLAY) {
+    if (table.getState() == RoomConst.TABLE_STATE_PLAY) {
         let sendPlayer = table.getPlayerByUid(sendUid);
         retPrePkg.groups = derefineGroups_(sendPlayer.getGroups());
         retPrePkg.drawCardPos = sendPlayer.getDrawCardPos();
@@ -278,14 +277,14 @@ RummySvs.doSendEnterRoom = function(sendUid, table) {
         retPrePkg.leftOperSec = table.getLeftOpTime() - 1; // minus 1 second for better approxiamation
         retPrePkg.users = new Array();
         table.getPlayers().forEach(player => {
-            if (player.getPlayState() == RummyConst.PLAYER_STATE_PLAY || player.getPlayState() == RummyConst.PLAYER_STATE_DROP) {
+            if (player.getPlayState() == RoomConst.PLAYER_STATE_PLAY || player.getPlayState() == RoomConst.PLAYER_STATE_DROP) {
                 let pp = {};
             
                 pp.uid = player.getUid();
                 pp.operStatus = (pp.uid == table.getLastOpUid()) ? table.getOpStage() : 0;
-                pp.isDrop = (player.getPlayState() == RummyConst.PLAYER_STATE_DROP) ? 1 : 0;
-                let need1 = (pp.uid == table.getLastOpUid() && table.getOpStage() == RummyConst.OP_STAGE_FINISH && table.getLeftOpTime() > 0);
-                let need2 = (table.getOpStage() == RummyConst.OP_STAGE_LEFT_DECLARE && player.getPlayState() == RummyConst.PLAYER_STATE_PLAY && !player.isFinishDeclare());
+                pp.isDrop = (player.getPlayState() == RoomConst.PLAYER_STATE_DROP) ? 1 : 0;
+                let need1 = (pp.uid == table.getLastOpUid() && table.getOpStage() == RoomConst.OP_STAGE_FINISH && table.getLeftOpTime() > 0);
+                let need2 = (table.getOpStage() == RoomConst.OP_STAGE_LEFT_DECLARE && player.getPlayState() == RoomConst.PLAYER_STATE_PLAY && !player.isFinishDeclare());
                 pp.isNeedDeclare = (need1 || need2) ? 1 : 0;
                 pp.isFinishDeclare = player.isFinishDeclare() ? 1 : 0;
                 pp.groups = player.isFinishDeclare() ? derefineGroups_(player.getGroups()) : new Array();
@@ -360,18 +359,18 @@ exports.doCastGameStart = function(tid) {
     retPrePkg.players = new Array();
     let players = table.getPlayers()
     players.forEach((player) => {
-        if (player.getPlayState() == RummyConst.PLAYER_STATE_PLAY) {
+        if (player.getPlayState() == RoomConst.PLAYER_STATE_PLAY) {
             let ply = {}
             ply.uid = player.getUid();
             ply.money = player.getMoney();
             ply.card = player.getChooseDCard();
-            ply.minusPoint = RummyConst.MAX_SCORE;
-            ply.minusMoney = BigInt(RummyConst.MAX_SCORE * table.getSmallbet());
+            ply.minusPoint = RoomConst.MAX_SCORE;
+            ply.minusMoney = BigInt(RoomConst.MAX_SCORE * table.getSmallbet());
             retPrePkg.players.push(ply);
         }
     })
     players.forEach((player) => {
-        if (player.getPlayState() == RummyConst.PLAYER_STATE_PLAY) {
+        if (player.getPlayState() == RoomConst.PLAYER_STATE_PLAY) {
             eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: player.getUid(), prePkg: retPrePkg});
         }
     })
@@ -522,13 +521,13 @@ exports.doCastGameOverResult = function(tid) {
     retPrePkg.winUid = table.getWinnerUid();
     retPrePkg.users = new Array();
     table.getPlayers().forEach(player => {
-        if (player.getPlayState() == RummyConst.PLAYER_STATE_DROP || player.getPlayState() == RummyConst.PLAYER_STATE_PLAY) {
+        if (player.getPlayState() == RoomConst.PLAYER_STATE_DROP || player.getPlayState() == RoomConst.PLAYER_STATE_PLAY) {
             let pp = {};
             pp.uid = player.getUid();
             pp.score = player.getScore();
             pp.money = player.getMoney();
             pp.winMoney = player.getWinMoney();
-            pp.isDrop = (player.getPlayState() == RummyConst.PLAYER_STATE_DROP) ? 1 : 0;
+            pp.isDrop = (player.getPlayState() == RoomConst.PLAYER_STATE_DROP) ? 1 : 0;
             pp.groups = derefineGroups_(player.getGroups());
             pp.name = player.getNickname();
             pp.isFinishDeclare = player.isFinishDeclare() ? 1 : 0;
@@ -539,7 +538,7 @@ exports.doCastGameOverResult = function(tid) {
 
     let players = table.getPlayers();
     players.forEach(player => {
-        if (player.getPlayState() == RummyConst.PLAYER_STATE_DROP || player.getPlayState() == RummyConst.PLAYER_STATE_PLAY) {
+        if (player.getPlayState() == RoomConst.PLAYER_STATE_DROP || player.getPlayState() == RoomConst.PLAYER_STATE_PLAY) {
             eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: player.getUid(), prePkg: retPrePkg});
         }
     });

@@ -1,6 +1,6 @@
-const RummyConst = require("./RummyConst");
+const RoomConst = require("./RoomConst");
 
-let RummyPlayer = {}
+let RoomPlayer = {}
 class Player {
     constructor(uid, userinfo) {
         this.uid_ = uid
@@ -170,9 +170,9 @@ class Player {
         this.setScore(0);
         this.setGold(0); // todo later
         this.setRound(0);
-        this.setDropType(RummyConst.PLAYER_NO_DROP);
+        this.setDropType(RoomConst.PLAYER_NO_DROP);
         this.setFinishDeclare(false);
-        this.setPlayState(RummyConst.PLAYER_STATE_OFF);
+        this.setPlayState(RoomConst.PLAYER_STATE_OFF);
         this.setChooseDCard(-1);
         this.setCards(new Array());
         this.setGroups(new Array());
@@ -180,8 +180,8 @@ class Player {
     }
 }
 
-RummyPlayer.Player = Player;
+RoomPlayer.Player = Player;
 
 module.exports = {
-    Player: RummyPlayer.Player,
+    Player: RoomPlayer.Player,
 }

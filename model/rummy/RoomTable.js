@@ -1,11 +1,11 @@
-let RummyTable = {};
-const RummyConst = require("./RummyConst");
+let RoomTable = {};
+const RoomConst = require("./RoomConst");
 
 var myConf = require('../../config/MyConf');
-const RummyUtil = require("./RummyUtil");
+const RoomUtil = require("./RoomUtil");
 const RummySvs = require("../../services/rummy/RummySvs");
 
-let RummyPlayer = require("./RummyPlayer");
+let RoomPlayer = require("./RoomPlayer");
 
 function getRandomInteger(min, max) {
     return Math.floor(Math.random() * (max - min + 1) ) + min;
@@ -128,7 +128,7 @@ class Table {
         let opSeatId = this.getLastOpSeatId();
         if (opSeatId >= 0) {
             let player = this.getPlayerBySeatId(opSeatId);
-            if (player && player.getPlayState() == RummyConst.PLAYER_STATE_PLAY && !player.isFinishDeclare()) {
+            if (player && player.getPlayState() == RoomConst.PLAYER_STATE_PLAY && !player.isFinishDeclare()) {
                 return player.getUid();
             }
         }
@@ -164,7 +164,7 @@ class Table {
     getCurPlayersNum() { // players in current play
         let curPlayerNum = 0;
         this.players_.forEach((player) => {
-            if (player.getPlayState() == RummyConst.PLAYER_STATE_PLAY) {
+            if (player.getPlayState() == RoomConst.PLAYER_STATE_PLAY) {
                 curPlayerNum++;
             }
         })
@@ -218,11 +218,11 @@ class Table {
         return pSeats;
     }
     randomGetIdleSeatId(usedSeats) {
-        if (usedSeats.length >= RummyConst.MAX_TABLE_PLAYERS) {
+        if (usedSeats.length >= RoomConst.MAX_TABLE_PLAYERS) {
             return -1;
         }        
         let idleSeats = new Array();
-        for (i = 0; i < RummyConst.MAX_TABLE_PLAYERS; i++) {
+        for (i = 0; i < RoomConst.MAX_TABLE_PLAYERS; i++) {
             if (!usedSeats.includes(i)) {
                 idleSeats.push(i);
             }
@@ -232,8 +232,8 @@ class Table {
     }
 
     doPlayerLogin(uid, userinfo) {
-        let player = new RummyPlayer.Player(uid, userinfo);
-        player.setPlayState(RummyConst.PLAYER_STATE_OFF);
+        let player = new RoomPlayer.Player(uid, userinfo);
+        player.setPlayState(RoomConst.PLAYER_STATE_OFF);
         
         let pSeats = this.getPlayerSeats();
         pSeats.sort();
@@ -248,9 +248,9 @@ class Table {
         exitParams.ret = -1;
         let isExist = this.isPlayerExist(uid);
         if (isExist) {
-            if (this.getPlayerByUid(uid).getPlayState() == RummyConst.PLAYER_STATE_PLAY) {
+            if (this.getPlayerByUid(uid).getPlayState() == RoomConst.PLAYER_STATE_PLAY) {
                 // in playing game and force exit room
-                RummySvs.doAutoCliDrop(uid, RummyConst.PLAYER_DROP_BAD_BEHAVIOR);
+                RummySvs.doAutoCliDrop(uid, RoomConst.PLAYER_DROP_BAD_BEHAVIOR);
             }
 
             let player = this.deletePlayerByUid(uid);
@@ -272,11 +272,11 @@ class Table {
     triggerDoGameReady() {
         let tState = this.getState();
         let playerNum = this.getPlayers().length;
-        let isOk = (tState == RummyConst.TABLE_STATE_NOT_PLAY && playerNum >= 2);
+        let isOk = (tState == RoomConst.TABLE_STATE_NOT_PLAY && playerNum >= 2);
         if (!isOk) {
             return false;
         }
-        this.setGameStartCountDown_(RummyConst.GAME_START_SECOND);
+        this.setGameStartCountDown_(RoomConst.GAME_START_SECOND);
         this.countDownLoopId_ = setInterval(() => {
             let leftTime = this.getGameStartCountDown_();
             if (this.leftTime > 0) {
@@ -287,9 +287,9 @@ class Table {
             clearTimeout(this.countDownDelayId_);
             clearInterval(this.countDownLoopId_);
             this.doGameStart();
-        }, (RummyConst.GAME_START_SECOND) * 1000);
+        }, (RoomConst.GAME_START_SECOND) * 1000);
 
-        this.setState(RummyConst.TABLE_STATE_COUNTDOWN);
+        this.setState(RoomConst.TABLE_STATE_COUNTDOWN);
 
         this.getPlayers().forEach((player) => {
             RummySvs.doSendGameStartCountDown(player.getUid(), this.getGameStartCountDown_());
@@ -303,7 +303,7 @@ class Table {
     checkCancelGameReady() {
         let tState = this.getState();
         let playerNum = this.getPlayers().length;
-        if (tState == RummyConst.TABLE_STATE_COUNTDOWN && playerNum <= 1) {
+        if (tState == RoomConst.TABLE_STATE_COUNTDOWN && playerNum <= 1) {
             this.cancelGameReady_()
             return true;
         }
@@ -318,25 +318,25 @@ class Table {
 
     triggerReshuffleOldCards_() {
         let cards = this.oldSlotCards_.splice(0, this.oldSlotCards_.length - 1);
-        let newCards = RummyUtil.shuffleCards(cards);
+        let newCards = RoomUtil.shuffleCards(cards);
         this.setNewSlotCards(newCards);
     }
 
     doGameStart() {
         // 选庄家
-        this.setState(RummyConst.TABLE_STATE_PLAY);
-        this.getPlayers().forEach(player => {player.setPlayState(RummyConst.PLAYER_STATE_PLAY)});
+        this.setState(RoomConst.TABLE_STATE_PLAY);
+        this.getPlayers().forEach(player => {player.setPlayState(RoomConst.PLAYER_STATE_PLAY)});
         
         let playerSeats = this.getPlayerSeats();
         playerSeats.sort();
-        let cards = RummyUtil.getChooseDealerCards(playerSeats.length);
-        let maxCard = RummyUtil.getMaxCard(cards);
+        let cards = RoomUtil.getChooseDealerCards(playerSeats.length);
+        let maxCard = RoomUtil.getMaxCard(cards);
         let smallbet = this.getSmallbet();
         for (let i = 0; i < playerSeats.length; i++) { // 选庄家顺时针
             let player = this.getPlayerBySeatId(playerSeats[i]);
-            let money = player.getMoney() - BigInt(RummyConst.MAX_SCORE * smallbet);
+            let money = player.getMoney() - BigInt(RoomConst.MAX_SCORE * smallbet);
             player.setMoney(money) // minus smallbet
-            player.setPlayState(RummyConst.PLAYER_STATE_PLAY)
+            player.setPlayState(RoomConst.PLAYER_STATE_PLAY)
             player.setChooseDCard(cards[i])
             if (maxCard == cards[i]) {
                 let nextSeatId = (i < playerSeats.length - 1) ? playerSeats[i + 1] : playerSeats[0];
@@ -351,19 +351,19 @@ class Table {
         this.chooseDealerDelayId_ = setTimeout(() => {
             clearTimeout(this.chooseDealerDelayId_);
             this.doDealCards();
-        }, (RummyConst.GAME_CHOOSE_D_SECOND) * 1000);
+        }, (RoomConst.GAME_CHOOSE_D_SECOND) * 1000);
         
     }
 
     doDealCards() {
         let cardDeckNum = (this.getPlayerSeats().length <= 2) ? 1 : 2;
-        let cards = RummyUtil.createInitCards(cardDeckNum);
-        cards = RummyUtil.shuffleCards(cards);
+        let cards = RoomUtil.createInitCards(cardDeckNum);
+        cards = RoomUtil.shuffleCards(cards);
 
         this.setMagicCard(cards.splice(0, 1)[0]);
         this.players_.forEach((player) => {
-            if (player.getPlayState() == RummyConst.PLAYER_STATE_PLAY) {
-                player.setCards(cards.splice(0, RummyConst.PLAYER_INIT_CARD_NUM));
+            if (player.getPlayState() == RoomConst.PLAYER_STATE_PLAY) {
+                player.setCards(cards.splice(0, RoomConst.PLAYER_INIT_CARD_NUM));
                 let groups = new Array();
                 groups.push(player.getCards())
                 player.setGroups(groups)
@@ -375,7 +375,7 @@ class Table {
         this.cardToOldSlot_(cards.splice(0, 1)[0]);
 
         this.players_.forEach((player) => {
-            if (player.getPlayState() == RummyConst.PLAYER_STATE_PLAY) {
+            if (player.getPlayState() == RoomConst.PLAYER_STATE_PLAY) {
                 RummySvs.doSendDealCards(this.getTid(), player.getUid());
             }
         });
@@ -384,7 +384,7 @@ class Table {
         this.dealCardsDelayId_ = setTimeout(() => {
             clearTimeout(this.dealCardsDelayId_);
             this.doCheckUserTurn();
-        }, (RummyConst.GAME_DEAL_CARDS_SECOND) * 1000);
+        }, (RoomConst.GAME_DEAL_CARDS_SECOND) * 1000);
     }
 
     doCheckUserTurn() {
@@ -393,7 +393,7 @@ class Table {
         }
         this.isUserTurnChecking_ = true;
 
-        this.setOpStage(RummyConst.OP_STAGE_DRAW);
+        this.setOpStage(RoomConst.OP_STAGE_DRAW);
 
         let playerSeats = this.getPlayerSeats();
         playerSeats.sort();
@@ -403,7 +403,7 @@ class Table {
         for (let i = 0; i < playerSeats.length; i++) {
             idx = (idx > 0) ? (idx - 1) : (playerSeats.length - 1);
             let nextPlayer = this.getPlayerBySeatId(playerSeats[idx]);
-            if ((nextPlayer) && (nextPlayer.getPlayState() == RummyConst.PLAYER_STATE_PLAY)) {
+            if ((nextPlayer) && (nextPlayer.getPlayState() == RoomConst.PLAYER_STATE_PLAY)) {
                 opSeatId = nextPlayer.getSeatId();
                 break;
             }
@@ -418,7 +418,7 @@ class Table {
         } else if (opSeatId != -1) {
             this.setLastOpSeatId(opSeatId);
             this.getPlayerBySeatId(opSeatId).triggerRound();
-            RummySvs.doCastUserTurn(this.getTid(), this.getLastOpUid(), RummyConst.PLAYER_OP_SECOND);
+            RummySvs.doCastUserTurn(this.getTid(), this.getLastOpUid(), RoomConst.PLAYER_OP_SECOND);
         } else {
             console.log("No player turn ... no turn")
             this.isUserTurnChecking_ = false;
@@ -427,11 +427,11 @@ class Table {
 
         // deal cards anim time
         this.doClearUserTurn_();
-        this.startOpTimeTick(RummyConst.PLAYER_OP_SECOND);
+        this.startOpTimeTick(RoomConst.PLAYER_OP_SECOND);
         this.userTurnDelayId_ = setTimeout(() => {
             this.doClearUserTurn_();
             this.doUserTurnTimeout();
-        }, (RummyConst.PLAYER_OP_SECOND) * 1000);
+        }, (RoomConst.PLAYER_OP_SECOND) * 1000);
 
         this.isUserTurnChecking_ = false;
     }
@@ -443,19 +443,19 @@ class Table {
     doUserTurnTimeout() {
         this.clearOpTimeTick();
         let opPlayer = this.getPlayerBySeatId(this.getLastOpSeatId());
-        if (this.getOpStage() == RummyConst.OP_STAGE_DRAW) {
+        if (this.getOpStage() == RoomConst.OP_STAGE_DRAW) {
             this.doCheckUserTurn(); // audo pass if user is in draw card stage
-        } else if (this.getOpStage() == RummyConst.OP_STAGE_DISCARD) {
+        } else if (this.getOpStage() == RoomConst.OP_STAGE_DISCARD) {
             // help discard user's last draw card
             RummySvs.doAutoDiscard(opPlayer.getUid(), this.getLastDrawCard(), -1);
             // DO NOT WRITE doCheckUserTurn, because
             // [RummySvs.doAutoDiscard] logic later trigers [doPlayerDiscard] logic,
             // which already has [doCheckUserTurn]
-        } else if (this.getOpStage() == RummyConst.OP_STAGE_FINISH) {
+        } else if (this.getOpStage() == RoomConst.OP_STAGE_FINISH) {
             RummySvs.doAutoDeclare(opPlayer.getUid(), opPlayer.getGroups());
-        } else if (this.getOpStage() == RummyConst.OP_STAGE_LEFT_DECLARE) {
+        } else if (this.getOpStage() == RoomConst.OP_STAGE_LEFT_DECLARE) {
             this.getPlayers().forEach(player => {
-                if (player.getPlayState() == RummyConst.PLAYER_STATE_PLAY && !player.isFinishDeclare()) {
+                if (player.getPlayState() == RoomConst.PLAYER_STATE_PLAY && !player.isFinishDeclare()) {
                     RummySvs.doAutoDeclare(player.getUid(), player.getGroups());
                 }
             });
@@ -468,7 +468,7 @@ class Table {
         if (this.getLastOpSeatId() != player.getSeatId()) { // not user's turn
             return retParams;
         }
-        if (this.getOpStage() != RummyConst.OP_STAGE_DRAW) { // not in draw card stage
+        if (this.getOpStage() != RoomConst.OP_STAGE_DRAW) { // not in draw card stage
             retParams.ret = 2;
             return retParams;
         }
@@ -479,7 +479,7 @@ class Table {
         }   
         player.insertCard(drawCard);
         this.setLastDrawCard(drawCard);
-        this.setOpStage(RummyConst.OP_STAGE_DISCARD);
+        this.setOpStage(RoomConst.OP_STAGE_DISCARD);
 
         retParams.ret = 0;
         retParams.tid = this.getTid();
@@ -496,7 +496,7 @@ class Table {
         if (this.getLastOpSeatId() != player.getSeatId()) { // not user's turn
             return retParams;
         }
-        if (this.getOpStage() != RummyConst.OP_STAGE_DISCARD) { // not in discard card stage
+        if (this.getOpStage() != RoomConst.OP_STAGE_DISCARD) { // not in discard card stage
             retParams.ret = 2;
             return retParams;
         }
@@ -519,7 +519,7 @@ class Table {
             return retParams;
         }
         // [finish] operation can only be done in discard card stage
-        if (this.getOpStage() != RummyConst.OP_STAGE_DISCARD) {
+        if (this.getOpStage() != RoomConst.OP_STAGE_DISCARD) {
             retParams.ret = 2;
             return retParams;
         }
@@ -530,17 +530,17 @@ class Table {
         }
 
         this.doClearUserTurn_();
-        this.setOpStage(RummyConst.OP_STAGE_FINISH);
-        this.startOpTimeTick(RummyConst.PLAYER_FINISH_SECOND);
+        this.setOpStage(RoomConst.OP_STAGE_FINISH);
+        this.startOpTimeTick(RoomConst.PLAYER_FINISH_SECOND);
         this.setFinishCard(finishCard);
         this.userFinishDelayId_ = setTimeout(() => {
             clearTimeout(this.userFinishDelayId_);
             this.doUserTurnTimeout();
-        }, (RummyConst.PLAYER_FINISH_SECOND) * 1000);
+        }, (RoomConst.PLAYER_FINISH_SECOND) * 1000);
 
         retParams.ret = 0;
         retParams.tid = this.getTid();
-        retParams.time = RummyConst.PLAYER_FINISH_SECOND;
+        retParams.time = RoomConst.PLAYER_FINISH_SECOND;
         return retParams
     }
 
@@ -551,23 +551,23 @@ class Table {
             if (this.getLastOpSeatId() != player.getSeatId()) { // not user's turn
                 return retParams;
             }
-            if (this.getOpStage() != RummyConst.OP_STAGE_FINISH) { // not in finish stage
+            if (this.getOpStage() != RoomConst.OP_STAGE_FINISH) { // not in finish stage
                 retParams.ret = 2;
                 return retParams;
             }  
         } else { // already has valid declaration
-            if (this.getOpStage() != RummyConst.OP_STAGE_LEFT_DECLARE) { // not in left declare stage
+            if (this.getOpStage() != RoomConst.OP_STAGE_LEFT_DECLARE) { // not in left declare stage
                 retParams.ret = 3;
                 return retParams;
             }
         }
-        let judgeInfo = RummyUtil.judgeGroups(groups, this.getMagicCard());
+        let judgeInfo = RoomUtil.judgeGroups(groups, this.getMagicCard());
         
         if (!this.hasValidDeclare() && judgeInfo.valid) { // the first valid declare player
             this.doFirstValidDeclare_(uid);
             
             retParams.ret = 0;
-            retParams.time = RummyConst.PLAYER_LEFT_DECLARE_SECOND;
+            retParams.time = RoomConst.PLAYER_LEFT_DECLARE_SECOND;
             retParams.isFirstValidDeclare = true;
             return retParams;
         }
@@ -593,13 +593,13 @@ class Table {
         let winPlayer = this.getPlayerByUid(uid);
         winPlayer.setFinishDeclare(true);
         this.doScoreAndMoneyCalc_();
-        this.setOpStage(RummyConst.OP_STAGE_LEFT_DECLARE);
+        this.setOpStage(RoomConst.OP_STAGE_LEFT_DECLARE);
 
-        this.startOpTimeTick(RummyConst.PLAYER_LEFT_DECLARE_SECOND);
+        this.startOpTimeTick(RoomConst.PLAYER_LEFT_DECLARE_SECOND);
         this.userLeftDeclareDelayId_ = setTimeout(() => {
             clearTimeout(this.userLeftDeclareDelayId_);
             this.doUserTurnTimeout();
-        }, (RummyConst.PLAYER_LEFT_DECLARE_SECOND) * 1000);
+        }, (RoomConst.PLAYER_LEFT_DECLARE_SECOND) * 1000);
     }
 
     doTryFailDeclare_(uid) {
@@ -608,7 +608,7 @@ class Table {
         losePlayer.setFinishDeclare(true);
         this.cardToOldSlot_(this.getFinishCard());
         this.setFinishCard(-1);
-        RummySvs.doAutoCliDrop(uid, RummyConst.PLAYER_DROP_WRONG_DECLARE);
+        RummySvs.doAutoCliDrop(uid, RoomConst.PLAYER_DROP_WRONG_DECLARE);
     }
 
     doLeftDeclare_(uid) {
@@ -627,19 +627,19 @@ class Table {
         let retParams = {ret: 1};
         let player = this.getPlayerByUid(uid);
         
-        if (dropType != RummyConst.PLAYER_DROP_BAD_BEHAVIOR) {
+        if (dropType != RoomConst.PLAYER_DROP_BAD_BEHAVIOR) {
             if (this.getLastOpSeatId() != player.getSeatId()) { // not user's turn
             return retParams;
             }
 
             // [drop] operation can only be done in draw card stage or finish stage(wrong declare in later situation)
-            if (!(this.getOpStage() == RummyConst.OP_STAGE_DRAW || this.getOpStage() == RummyConst.OP_STAGE_FINISH)) {
+            if (!(this.getOpStage() == RoomConst.OP_STAGE_DRAW || this.getOpStage() == RoomConst.OP_STAGE_FINISH)) {
                 retParams.ret = 2;
                 return retParams;
             }
         }
         if (!dropType) {
-            dropType = (player.isFirstRound()) ? RummyConst.PLAYER_DROP_FIRST : RummyConst.PLAYER_DROP_LATER;
+            dropType = (player.isFirstRound()) ? RoomConst.PLAYER_DROP_FIRST : RoomConst.PLAYER_DROP_LATER;
         }
         this.calcAndMarkDrop_(player.getUid(), dropType);
         retParams.ret = 0;
@@ -653,7 +653,7 @@ class Table {
         if (this.getCurPlayersNum() == 1 && !this.hasValidDeclare()) { // drop game end
             let leftOnePlayer = null;
             this.getPlayers().forEach(player => {
-                if (player.getPlayState() == RummyConst.PLAYER_STATE_PLAY) {
+                if (player.getPlayState() == RoomConst.PLAYER_STATE_PLAY) {
                     leftOnePlayer = player;
                 }
             });
@@ -667,11 +667,11 @@ class Table {
 
     calcAndMarkDrop_(dropUid, dropType) {
         let dropPlayer = this.getPlayerByUid(dropUid);
-        if (dropPlayer.getPlayState() == RummyConst.PLAYER_STATE_PLAY) {
-            dropPlayer.setPlayState(RummyConst.PLAYER_STATE_DROP);
+        if (dropPlayer.getPlayState() == RoomConst.PLAYER_STATE_PLAY) {
+            dropPlayer.setPlayState(RoomConst.PLAYER_STATE_DROP);
             dropPlayer.setDropType(dropType);
 
-            dropPlayer.setScore(RummyUtil.getDropScore(dropType));
+            dropPlayer.setScore(RoomUtil.getDropScore(dropType));
             dropPlayer.setWinMoney(-dropPlayer.getScore() * this.getSmallbet());
             dropPlayer.setMoney(dropPlayer.getMoney() + dropPlayer.getWinMoney());
         }
@@ -683,17 +683,17 @@ class Table {
         this.getPlayers().forEach(player => {
             let isWinner = (player.getUid() == winPlayer.getUid());
             let pState = player.getPlayState();
-            if (pState != RummyConst.PLAYER_STATE_DROP && player.isFinishDeclare()) {
+            if (pState != RoomConst.PLAYER_STATE_DROP && player.isFinishDeclare()) {
                 // only player who not drop, and finish declaration
                 // drop player calculates instantly when drop
-                let score = RummyUtil.getNoDropScore(isWinner, player.getGroups(), this.getMagicCard());
+                let score = RoomUtil.getNoDropScore(isWinner, player.getGroups(), this.getMagicCard());
                 player.setScore(score);
                 if (!isWinner) {
                     player.setWinMoney(-score * this.getSmallbet());
                     player.setMoney(player.getMoney() + player.getWinMoney());
                 }
             }
-            if (pState == RummyConst.PLAYER_STATE_DROP || (pState == RummyConst.PLAYER_STATE_PLAY && player.isFinishDeclare())) {
+            if (pState == RoomConst.PLAYER_STATE_DROP || (pState == RoomConst.PLAYER_STATE_PLAY && player.isFinishDeclare())) {
                 if (!isWinner) {
                     winnerWinMoney += player.getScore() * this.getSmallbet();
                 }
@@ -707,7 +707,7 @@ class Table {
         let canNewGame = true;
         if (hasValidDeclare) {
             this.getPlayers().forEach(player => {
-                if (player.getPlayState() == RummyConst.PLAYER_STATE_PLAY && !player.isFinishDeclare()) {
+                if (player.getPlayState() == RoomConst.PLAYER_STATE_PLAY && !player.isFinishDeclare()) {
                     canNewGame = false;
                 }
             });
@@ -727,7 +727,7 @@ class Table {
 
     resetTable_() {
         this.setLevel(1); // todo later
-        this.setState(RummyConst.TABLE_STATE_NOT_PLAY);
+        this.setState(RoomConst.TABLE_STATE_NOT_PLAY);
         this.setSmallbet(0); // todo later
         this.setMagicCard(-1);
         this.setFinishCard(-1);
@@ -738,13 +738,13 @@ class Table {
         this.setLastOpSeatId(-1);
         this.clearOpTimeTick();
         this.setLastDrawCard(-1);
-        this.setOpStage(RummyConst.OP_NO_STAGE);
+        this.setOpStage(RoomConst.OP_NO_STAGE);
         this.setWinnerUid(-1);
         this.setHasValidDeclare(false);
     }
 }
-RummyTable.Table = Table;
+RoomTable.Table = Table;
 
 module.exports = {
-    Table: RummyTable.Table,
+    Table: RoomTable.Table,
 }

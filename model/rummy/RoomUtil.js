@@ -1,14 +1,14 @@
 var myConf = require('../../config/MyConf');
 const CardsDef = require(myConf.paths.model + '/cards/CardsDef');
-const RummyConst = require("./RummyConst");
+const RoomConst = require("./RoomConst");
 
-let RummyUtil = {};
-let self = RummyUtil;
+let RoomUtil = {};
+let self = RoomUtil;
 function getRandomInteger(min, max) {
     return Math.floor(Math.random() * (max - min + 1) ) + min;
 }
 
-RummyUtil.createInitCards = function(deckNum) { // decks of cards
+RoomUtil.createInitCards = function(deckNum) { // decks of cards
     let cards = new Array();
     const deck = CardsDef.cards;
     for (let j = 0; j < deckNum; j ++) {
@@ -21,7 +21,7 @@ RummyUtil.createInitCards = function(deckNum) { // decks of cards
     return cards;
 }
 
-RummyUtil.getChooseDealerCards = function(playerNumber) {
+RoomUtil.getChooseDealerCards = function(playerNumber) {
     let cards = new Array();
     const deck = CardsDef.cards;
     for (let i = 0; i < deck.length; i++) {
@@ -29,11 +29,11 @@ RummyUtil.getChooseDealerCards = function(playerNumber) {
             cards.push(deck[i]);
         }
     }
-    cards = RummyUtil.shuffleCards(cards);
+    cards = RoomUtil.shuffleCards(cards);
     return cards.splice(0, playerNumber);
 }
 
-RummyUtil.getMaxCard = function(cards) {
+RoomUtil.getMaxCard = function(cards) {
     let maxCard = 0;
     let maxCardValue = 0;
     let maxCardVariety = 0;
@@ -53,7 +53,7 @@ RummyUtil.getMaxCard = function(cards) {
     return maxCard;
 }
 
-RummyUtil.shuffle1ToNum_ = function(num) {
+RoomUtil.shuffle1ToNum_ = function(num) {
     let idxs = new Array();
     for (i = 0; i < num; i++) {
         idxs.push(i + 1);
@@ -69,9 +69,9 @@ RummyUtil.shuffle1ToNum_ = function(num) {
     return idxs
 }
 
-RummyUtil.shuffleCards = function(cards) {
+RoomUtil.shuffleCards = function(cards) {
     let newCards = new Array();
-    let idxs = RummyUtil.shuffle1ToNum_(cards.length);
+    let idxs = RoomUtil.shuffle1ToNum_(cards.length);
     for (let i = 0; i < cards.length; i++) {
         let idx = idxs[i] - 1; // begin-with-1 change to begin-with-0
         newCards[i] = cards[idx];
@@ -79,7 +79,7 @@ RummyUtil.shuffleCards = function(cards) {
     return newCards
 }
 
-RummyUtil.judgeGroups = function(groups, tableMagic) {
+RoomUtil.judgeGroups = function(groups, tableMagic) {
     let retParams = {valid: false, score: 80};
 
     let confs = new Array();
@@ -89,7 +89,7 @@ RummyUtil.judgeGroups = function(groups, tableMagic) {
         group.forEach(card => {
             confs[idx].point += self.getCardScore(card, tableMagic);
         });
-        confs[idx].point = (confs[idx].point > RummyConst.MAX_SCORE) ? RummyConst.MAX_SCORE : confs[idx].point;
+        confs[idx].point = (confs[idx].point > RoomConst.MAX_SCORE) ? RoomConst.MAX_SCORE : confs[idx].point;
     });
     // console.log("confs", confs)
 
@@ -97,30 +97,30 @@ RummyUtil.judgeGroups = function(groups, tableMagic) {
     let sequenceCount = 0;
     let isHasTypeOTHER = false;
     confs.forEach(conf => {
-        if (conf.cardType == RummyConst.CARD_TYPE_STRAIGHT_FLUSH) {
+        if (conf.cardType == RoomConst.CARD_TYPE_STRAIGHT_FLUSH) {
             isHasPureSequence = true;
         }
-        if (conf.cardType == RummyConst.CARD_TYPE_STRAIGHT_FLUSH || conf.cardType == RummyConst.CARD_TYPE_STRAIGHT) {
+        if (conf.cardType == RoomConst.CARD_TYPE_STRAIGHT_FLUSH || conf.cardType == RoomConst.CARD_TYPE_STRAIGHT) {
             sequenceCount++;
         }
-        if (conf.cardType == RummyConst.CARD_TYPE_OTHERS) {
+        if (conf.cardType == RoomConst.CARD_TYPE_OTHERS) {
             isHasTypeOTHER = true;
         }
     });
     // console.log("isHasPureSequence...", isHasPureSequence, sequenceCount, isHasTypeOTHER)
     let score = 0;
     confs.forEach(conf => { // recalculate score
-        if (conf.cardType == RummyConst.CARD_TYPE_STRAIGHT_FLUSH) {conf.point = 0;}
-        if (isHasPureSequence && conf.cardType == RummyConst.CARD_TYPE_STRAIGHT) {
+        if (conf.cardType == RoomConst.CARD_TYPE_STRAIGHT_FLUSH) {conf.point = 0;}
+        if (isHasPureSequence && conf.cardType == RoomConst.CARD_TYPE_STRAIGHT) {
             conf.point = 0;
         }
-        if (isHasPureSequence && sequenceCount >= 2 && conf.cardType == RummyConst.CARD_TYPE_SANGONG) {
+        if (isHasPureSequence && sequenceCount >= 2 && conf.cardType == RoomConst.CARD_TYPE_SANGONG) {
             conf.point = 0; 
         }
         // console.log("conf.point", conf.point)
         score += conf.point;
     });
-    score = (score > RummyConst.MAX_SCORE) ? RummyConst.MAX_SCORE : score;
+    score = (score > RoomConst.MAX_SCORE) ? RoomConst.MAX_SCORE : score;
     
     retParams.score = score;
     if (isHasPureSequence && sequenceCount >= 2 && !isHasTypeOTHER && score == 0) {
@@ -130,22 +130,22 @@ RummyUtil.judgeGroups = function(groups, tableMagic) {
 }
 
 // 使用前提, group牌大于2张
-RummyUtil.getGroupCardType = function(group, tableMagic) {
-    let cardType = RummyConst.CARD_TYPE_OTHERS;
+RoomUtil.getGroupCardType = function(group, tableMagic) {
+    let cardType = RoomConst.CARD_TYPE_OTHERS;
     if (group.length <= 2) {
-        cardType = RummyConst.CARD_TYPE_OTHERS;
+        cardType = RoomConst.CARD_TYPE_OTHERS;
     } else if (self.isPureSequence(group)) {
-        cardType = RummyConst.CARD_TYPE_STRAIGHT_FLUSH;
+        cardType = RoomConst.CARD_TYPE_STRAIGHT_FLUSH;
     } else if (self.isSequence(group, tableMagic)) {
-        cardType = RummyConst.CARD_TYPE_STRAIGHT;
+        cardType = RoomConst.CARD_TYPE_STRAIGHT;
     } else if (self.isCardTypeSet(group, tableMagic)) {
-        cardType = RummyConst.CARD_TYPE_SANGONG;
+        cardType = RoomConst.CARD_TYPE_SANGONG;
     }
     return cardType;
 }
 
 // 使用前提, group牌大于2张
-RummyUtil.isPureSequence = function(group) {    
+RoomUtil.isPureSequence = function(group) {    
     // console.log("isPureSequence 判断有Joker牌")
     // 有Joker牌, 不能组成纯顺子(可以有魔法牌, 魔法牌当普通牌)
     for (let i = 0; i < group.length; i++) {
@@ -204,7 +204,7 @@ RummyUtil.isPureSequence = function(group) {
     return true;
 }
 
-RummyUtil.isSequence = function(group, tableMagic) {
+RoomUtil.isSequence = function(group, tableMagic) {
     if (group.length > 13) { // 大于13张牌, 不能组成顺子
         return false;
     }
@@ -283,7 +283,7 @@ RummyUtil.isSequence = function(group, tableMagic) {
 }
 
 // 使用前提, group牌大于2张
-RummyUtil.isCardTypeSet = function(group, tableMagic) {
+RoomUtil.isCardTypeSet = function(group, tableMagic) {
     if (group.length > 4) { // 大于4张牌, 不能组成条
         return false;
     }
@@ -324,7 +324,7 @@ RummyUtil.isCardTypeSet = function(group, tableMagic) {
     return true;
 }
 
-RummyUtil.isMagicCard = function(cardUint, tableMagic) {
+RoomUtil.isMagicCard = function(cardUint, tableMagic) {
     if (tableMagic == CardsDef.BIG_JOKER) { // Joker是魔法牌, Ace作魔法牌
         return cardUint == CardsDef.BIG_JOKER || cardUint % 16 == 0x0e
     } else {
@@ -332,7 +332,7 @@ RummyUtil.isMagicCard = function(cardUint, tableMagic) {
     }
 }
 
-RummyUtil.getCardScore = function(cardUint, tableMagic) {
+RoomUtil.getCardScore = function(cardUint, tableMagic) {
     let cardScore = 0
 
     let cardValue = cardUint % 16
@@ -346,12 +346,12 @@ RummyUtil.getCardScore = function(cardUint, tableMagic) {
     return cardScore;
 }
 
-RummyUtil.getNoDropScore = function(isWinner, groups, magicCard) {
-    let score = RummyConst.MAX_SCORE;
+RoomUtil.getNoDropScore = function(isWinner, groups, magicCard) {
+    let score = RoomConst.MAX_SCORE;
     if (isWinner) {
         score = 0;
     } else {
-        let judgeParams = RummyUtil.judgeGroups(groups, magicCard);
+        let judgeParams = RoomUtil.judgeGroups(groups, magicCard);
         score = judgeParams.score;
         if (judgeParams.valid && !isWinner) {
             score = 2;
@@ -360,16 +360,16 @@ RummyUtil.getNoDropScore = function(isWinner, groups, magicCard) {
     return score;
 }
 
-RummyUtil.getDropScore = function(dropType) {
-    let score = RummyConst.MAX_SCORE;
-    if (dropType == RummyConst.PLAYER_DROP_FIRST) {
+RoomUtil.getDropScore = function(dropType) {
+    let score = RoomConst.MAX_SCORE;
+    if (dropType == RoomConst.PLAYER_DROP_FIRST) {
         score = 20;
-    } else if (dropType == RummyConst.PLAYER_DROP_LATER) {
+    } else if (dropType == RoomConst.PLAYER_DROP_LATER) {
         score = 40;
-    } else if (dropType == RummyConst.PLAYER_DROP_BAD_BEHAVIOR || dropType == RummyConst.PLAYER_DROP_WRONG_DECLARE) {
-        score = RummyConst.MAX_SCORE;
+    } else if (dropType == RoomConst.PLAYER_DROP_BAD_BEHAVIOR || dropType == RoomConst.PLAYER_DROP_WRONG_DECLARE) {
+        score = RoomConst.MAX_SCORE;
     }
     return score;
 }
 
-module.exports = RummyUtil;
+module.exports = RoomUtil;

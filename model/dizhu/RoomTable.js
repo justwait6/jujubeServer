@@ -1,11 +1,11 @@
-let DizhuTable = {};
-const DizhuConst = require("./DizhuConst");
+let RoomTable = {};
+const RoomConst = require("./RoomConst");
 
 var myConf = require('../../config/MyConf');
-const DizhuUtil = require("./DizhuUtil");
+const RoomUtil = require("./RoomUtil");
 const DizhuSvs = require("../../services/dizhu/DizhuSvs");
 
-let DizhuPlayer = require("./DizhuPlayer");
+let RoomPlayer = require("./RoomPlayer");
 
 function getRandomInteger(min, max) {
     return Math.floor(Math.random() * (max - min + 1) ) + min;
@@ -128,7 +128,7 @@ class Table {
         let opSeatId = this.getLastOpSeatId();
         if (opSeatId >= 0) {
             let player = this.getPlayerBySeatId(opSeatId);
-            if (player && player.getPlayState() == DizhuConst.PLAYER_STATE_PLAY && !player.isFinishDeclare()) {
+            if (player && player.getPlayState() == RoomConst.PLAYER_STATE_PLAY && !player.isFinishDeclare()) {
                 return player.getUid();
             }
         }
@@ -164,7 +164,7 @@ class Table {
     getCurPlayersNum() { // players in current play
         let curPlayerNum = 0;
         this.players_.forEach((player) => {
-            if (player.getPlayState() == DizhuConst.PLAYER_STATE_PLAY) {
+            if (player.getPlayState() == RoomConst.PLAYER_STATE_PLAY) {
                 curPlayerNum++;
             }
         })
@@ -218,11 +218,11 @@ class Table {
         return pSeats;
     }
     randomGetIdleSeatId(usedSeats) {
-        if (usedSeats.length >= DizhuConst.MAX_TABLE_PLAYERS) {
+        if (usedSeats.length >= RoomConst.MAX_TABLE_PLAYERS) {
             return -1;
         }        
         let idleSeats = new Array();
-        for (i = 0; i < DizhuConst.MAX_TABLE_PLAYERS; i++) {
+        for (i = 0; i < RoomConst.MAX_TABLE_PLAYERS; i++) {
             if (!usedSeats.includes(i)) {
                 idleSeats.push(i);
             }
@@ -232,8 +232,8 @@ class Table {
     }
 
     doPlayerLogin(uid, userinfo) {
-        let player = new DizhuPlayer.Player(uid, userinfo);
-        player.setPlayState(DizhuConst.PLAYER_STATE_OFF);
+        let player = new RoomPlayer.Player(uid, userinfo);
+        player.setPlayState(RoomConst.PLAYER_STATE_OFF);
         
         let pSeats = this.getPlayerSeats();
         pSeats.sort();
@@ -248,9 +248,9 @@ class Table {
         exitParams.ret = -1;
         let isExist = this.isPlayerExist(uid);
         if (isExist) {
-            if (this.getPlayerByUid(uid).getPlayState() == DizhuConst.PLAYER_STATE_PLAY) {
+            if (this.getPlayerByUid(uid).getPlayState() == RoomConst.PLAYER_STATE_PLAY) {
                 // in playing game and force exit room
-                DizhuSvs.doAutoCliDrop(uid, DizhuConst.PLAYER_DROP_BAD_BEHAVIOR);
+                DizhuSvs.doAutoCliDrop(uid, RoomConst.PLAYER_DROP_BAD_BEHAVIOR);
             }
 
             let player = this.deletePlayerByUid(uid);
@@ -265,8 +265,8 @@ class Table {
         this.setLevel(1); // todo later
     }
 }
-DizhuTable.Table = Table;
+RoomTable.Table = Table;
 
 module.exports = {
-    Table: DizhuTable.Table,
+    Table: RoomTable.Table,
 }
