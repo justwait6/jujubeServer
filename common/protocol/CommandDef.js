@@ -10,6 +10,7 @@ Client始终发[偶数协议号], Server单播返回发[Client协议号 + 1]
 0x04XX, 广播, 房间, 玩法逻辑 
 */
 let CommandDef = {
+  // Client
   CLI_HEART_BEAT: 0x0200, // 心跳
   CLI_HALL_LOGIN: 0x0202, // 登录大厅
 	CLI_SEND_CHAT: 0x0300, // 发送聊天
@@ -20,15 +21,8 @@ let CommandDef = {
   CLI_REQ_SIT: 0x0406, // 主动请求坐下
   CLI_REQ_SWITCH_TABLE: 0x0408, // 主动请求换桌
   CLI_REQ_STAND: 0x040A, // 主动请求站起
-  CLI_RUMMY_DRAW_CARD: 0x040C, // Rummy请求摸牌
-  CLI_RUMMY_DISCARD_CARD: 0x040E, // Rummy请求出牌
-  CLI_RUMMY_FINISH: 0x0410, // Rummy请求Finish
-  CLI_RUMMY_DECLARE: 0x0412, // Rummy请求Declare
-  CLI_RUMMY_DROP: 0x0414, // Rummy请求弃整副牌
-  CLI_RUMMY_UPLOAD_GROUPS: 0x0416, // Rummy请求上报牌
-  CLI_RUMMY_GET_DROP_CARDS: 0x0418, // Rummy获取drop牌列表
-  CLI_RUMMY_USER_BACK: 0x041A, // Rummy玩家通报"I am back" 
   
+  // Server
   SVR_HEART_BEAT: 0x0201, // 心跳返回
   SVR_HALL_LOGIN: 0x0203, // 登录大厅返回
   SVR_PUSH: 0x0205, // 服务器自定义推送
@@ -42,6 +36,19 @@ let CommandDef = {
   SVR_CAST_USER_SIT: 0x1407, // 广播用户坐下
   SVR_REQ_SWITCH_TABLE: 0x0409, // 请求换桌返回
   SVR_REQ_STAND: 0x040B, // 请求站起返回
+
+  // Rummy Client Protocol Begin
+  CLI_RUMMY_DRAW_CARD: 0x040C, // Rummy请求摸牌
+  CLI_RUMMY_DISCARD_CARD: 0x040E, // Rummy请求出牌
+  CLI_RUMMY_FINISH: 0x0410, // Rummy请求Finish
+  CLI_RUMMY_DECLARE: 0x0412, // Rummy请求Declare
+  CLI_RUMMY_DROP: 0x0414, // Rummy请求弃整副牌
+  CLI_RUMMY_UPLOAD_GROUPS: 0x0416, // Rummy请求上报牌
+  CLI_RUMMY_GET_DROP_CARDS: 0x0418, // Rummy获取drop牌列表
+  CLI_RUMMY_USER_BACK: 0x041A, // Rummy玩家通报"I am back" 
+  // Rummy Client Protocol End
+  
+  // Rummy Server Protocol Begin
   SVR_RUMMY_COUNTDOWN: 0x14A1, // 广播游戏开始倒计时
   SVR_RUMMY_GAME_START: 0x14A2, // 广播游戏开始
   SVR_RUMMY_USER_TURN: 0x14A3, // 广播轮到玩家
@@ -63,6 +70,17 @@ let CommandDef = {
   SVR_RUMMY_UPLOAD_GROUPS: 0x0417, // 请求上报牌返回
   SVR_RUMMY_GET_DROP_CARDS: 0x0419, // 获取drop牌列表返回
   SVR_RUMMY_USER_BACK: 0x041B, // 通报"I am back"返回
+  // Rummy Server Protocol End
+
+
+  // Dizhu Client Protocol Begin
+  CLI_PLAYER_READY: 0x040C, // Dizhu请求准备
+  // Dizhu Client Protocol End
+  
+  // Dizhu Server Protocol Begin
+  SVR_PLAYER_READY: 0x040D, // Dizhu返回用户准备
+  SVR_CAST_PLAYER_READY: 0x140D, // Dizhu广播用户准备
+  // Dizhu Server Protocol End
 }
 
 module.exports = CommandDef

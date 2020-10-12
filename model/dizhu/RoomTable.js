@@ -244,8 +244,7 @@ class Table {
     }
 
     doPlayerExit(uid) {
-        let exitParams = {};
-        exitParams.ret = -1;
+        let exitParams = {ret: -1};
         let isExist = this.isPlayerExist(uid);
         if (isExist) {
             if (this.getPlayerByUid(uid).getPlayState() == RoomConst.PLAYER_STATE_PLAY) {
@@ -259,6 +258,32 @@ class Table {
             exitParams.gold = player.getGold();
         }
         return exitParams;
+    }
+
+    doPlayerReady(uid) {
+        let readyParams = {ret: -1};
+        let player = this.getPlayerByUid(uid);
+        if (player.getPlayState() == RoomConst.PLAYER_STATE_OFF) {
+            readyParams.ret = 0;
+            player.setPlayState(RoomConst.PLAYER_STATE_READY);
+        }
+        return readyParams;
+    }
+
+    triggerCheckStart() {
+        let canStart = true;
+        this.getPlayers().forEach(player => {
+            if (player.getPlayState() != RoomConst.PLAYER_STATE_READY) {
+                canStart = false;
+            }
+        });
+        if (this.getPlayers().length != RoomConst.MAX_TABLE_PLAYERS) {
+            canStart = false;
+        }
+
+        if (canStart) {
+            console.log("todo later, game start")
+        }
     }
 
     resetTable_() {
