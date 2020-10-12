@@ -4,6 +4,7 @@ var self = DizhuSvs;
 var myConf = require('../../config/MyConf');
 const RoomConst = require('../../model/dizhu/RoomConst');
 const SubGameDef = require('../../model/subGame/SubGameDef');
+const RummySvs = require('../rummy/RummySvs');
 var gameSvr = require(myConf.paths.model + '/dizhu/DizhuSvr');
 
 const CmdDef = require(myConf.paths.common + "/protocol/CommandDef");
@@ -36,7 +37,7 @@ DizhuSvs.onPackageReceived = function(parsedPkg) {
         self.doCliEnterRoom(parsedPkg);
     } else if (parsedPkg.cmd == CmdDef.CLI_EXIT_ROOM) {
         self.doCliExitRoom(parsedPkg);
-    } else if (parsedPkg.cmd == CmdDef.CLI_PLAYER_READY) {
+    } else if (parsedPkg.cmd == CmdDef.CLI_DIZHU_READY) {
         self.doCliReady(parsedPkg);
     }
 }
@@ -95,7 +96,6 @@ DizhuSvs.doSendEnterRoom = function(sendUid, table) {
     retPrePkg.level = table.getLevel();
     retPrePkg.state = table.getState();
     retPrePkg.smallbet = table.getSmallbet();
-    retPrePkg.dUid = table.getDealerUid();
     retPrePkg.players = new Array();
     let tPlayers = table.getPlayers()
     for (let i = 0; i < tPlayers.length; i++) {
@@ -165,7 +165,7 @@ DizhuSvs.doCastUserExit = function(tid, uid) {
 
 DizhuSvs.doSendReady = function(sendUid, retParams) {
     eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: sendUid, prePkg: {
-        cmd: CmdDef.SVR_PLAYER_READY,
+        cmd: CmdDef.SVR_DIZHU_READY,
         ret: retParams.ret,
     }});   
 }
@@ -174,7 +174,7 @@ DizhuSvs.doCastReady = function(tid, uid) {
     let table = gameSvr.getTable(tid);
     let players = table.getPlayers();
     let retPrePkg = {
-        cmd: CmdDef.SVR_CAST_PLAYER_READY,
+        cmd: CmdDef.SVR_CAST_DIZHU_READY,
         uid: uid,
     }
     players.forEach((player) => {
@@ -183,6 +183,20 @@ DizhuSvs.doCastReady = function(tid, uid) {
             eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: sendUid, prePkg: retPrePkg});   
         }
     });
+}
+
+exports.doSendGameStart = function(tid, uid) {
+    let table = gameSvr.getTable(tid);
+    let retPrePkg = {cmd: CmdDef.SVR_DIZHU_GAME_START};
+
+    let player = table.getPlayerByUid(uid)
+    let plyCards = player.getCards();
+    retPrePkg.cards = new Array();
+    plyCards.forEach((sCard) => {
+        retPrePkg.cards.push({card: sCard});
+    });
+
+    eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: player.getUid(), prePkg: retPrePkg});
 }
 
 module.exports = DizhuSvs;

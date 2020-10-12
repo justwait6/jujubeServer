@@ -6,6 +6,7 @@ const RoomUtil = require("./RoomUtil");
 const DizhuSvs = require("../../services/dizhu/DizhuSvs");
 
 let RoomPlayer = require("./RoomPlayer");
+const GameSvs = require("../../services/dizhu/DizhuSvs");
 
 function getRandomInteger(min, max) {
     return Math.floor(Math.random() * (max - min + 1) ) + min;
@@ -42,44 +43,17 @@ class Table {
     getSmallbet() {
         return this.smallbet_;
     }
-    setMagicCard(cardUint) {
-        this.magicCard_ = cardUint;
-    }
-    getMagicCard() {
-        return this.magicCard_;
-    }
-    setFinishCard(cardUint) {
-        this.finishCard_ = cardUint;
-    }
-    getFinishCard() {
-        return this.finishCard_;
-    }
-    setFirstDropCard(cardUint) {
-        this.firstDropCard_ = cardUint;
-    }
-    getFirstDropCard() {
-        return this.firstDropCard_;
-    }
-    setNewSlotCards(cards) {
-        this.newSlotCards_ = cards;
-    }
-    getNewSlotCards() {
-        return this.newSlotCards_;
-    }
-    getNewSlotCardNum() {
-        return this.newSlotCards_.length;
-    }
-    setOldSlotCards(cards) {
-        this.oldSlotCards_ = cards;
-    }
-    getOldSlotCards() {
-        return this.oldSlotCards_;
-    }
-    setDealerUid(uid) {
+    setDizhuUid(uid) {
         this.dUid_ = uid;
     }
-    getDealerUid() {
+    getDizhuUid() {
         return this.dUid_;
+    }
+    setDizhuCards(cards) {
+        this.dizhuCards_ = cards;
+    }
+    getDizhuCards() {
+        return this.dizhuCards_;
     }
     setLastOpSeatId(seatId) {
         this.lastOpSeatId_ = seatId;
@@ -89,12 +63,6 @@ class Table {
     }
     getLeftOpTime() {
         return this.leftOpTime_ || -1;
-    }
-    setLastDrawCard(card) {
-        this.lastDrawCard_ = card;
-    }
-    getLastDrawCard() {
-        return this.lastDrawCard_;
     }
     setOpStage(stage) {
         this.opStage_ = stage;
@@ -107,12 +75,6 @@ class Table {
     }
     getWinnerUid() {
         return this.winnerUid_;
-    }
-    setHasValidDeclare(valid) {
-        this.hasValidDeclare_ = valid;
-    }
-    hasValidDeclare() {
-        return this.hasValidDeclare_;
     }
     startOpTimeTick(time) {
         this.clearOpTimeTick();
@@ -133,30 +95,6 @@ class Table {
             }
         }
         return -1;
-    }
-    drawSingleCard_(region) {
-        let card = -1;
-        if (region == 0) { // draw from new card area
-            let cardNum = this.getNewSlotCards().length;
-            card = (cardNum <= 0) ? -1 : this.newSlotCards_.splice(0, 1)[0];
-        } else if (region == 1) { // draw from old area
-            let cardNum = this.getOldSlotCards().length;
-            card = (cardNum <= 0) ? -1 : this.oldSlotCards_.splice(this.oldSlotCards_.length - 1, 1)[0];
-        }
-
-        if (region == 1 && card != -1) { // update first drop card if fetch from old region.
-            let fCard = (this.oldSlotCards_.length <= 0) ? -1 : this.oldSlotCards_[this.oldSlotCards_.length - 1];
-            this.setFirstDropCard(fCard);
-        }
-
-        if (this.getNewSlotCardNum() == 0 && this.oldSlotCards_.length > 1) { // triger reshuffle
-            this.triggerReshuffleOldCards_();
-        }
-        return card;
-    }
-    cardToOldSlot_(card) {
-        this.oldSlotCards_.push(card);
-        this.setFirstDropCard(card);
     }
     getPlayers() {
         return this.players_ || [];
@@ -283,6 +221,90 @@ class Table {
 
         if (canStart) {
             console.log("todo later, game start")
+            this.doGameStart_();
+        }
+    }
+
+    doGameStart_() {
+        this.setState(RoomConst.TABLE_STATE_PLAY);
+        this.getPlayers().forEach(player => {player.setPlayState(RoomConst.PLAYER_STATE_PLAY)});
+
+        let cards = RoomUtil.createInitCards();
+        cards = RoomUtil.shuffleCards(cards);
+
+        this.players_.forEach((player) => {
+            if (player.getPlayState() == RoomConst.PLAYER_STATE_PLAY) {
+                player.setCards(cards.splice(0, RoomConst.PLAYER_INIT_CARD_NUM));
+            }
+        });
+
+        this.players_.forEach((player) => {
+            if (player.getPlayState() == RoomConst.PLAYER_STATE_PLAY) {
+                GameSvs.doSendGameStart(this.getTid(), player.getUid());
+            }
+        });
+
+        this.setDizhuCards(cards.splice(0, RoomConst.LEFT_DIZHU_CARD_NUM));
+
+        // deal cards anim time
+        this.dealCardsDelayId_ = setTimeout(() => {
+            clearTimeout(this.dealCardsDelayId_);
+            // this.doCheckGrabTurn();
+        }, (RoomConst.GAME_DEAL_CARDS_SECOND) * 1000);
+    }
+
+    doCheckGrabTurn() {
+        if (this.isGrabTurnChecking_) {
+            return;
+        }
+        this.isGrabTurnChecking_ = true;
+
+        this.setOpStage(RoomConst.OP_STAGE_GRAB_DIZHU);
+
+        let playerSeats = this.getPlayerSeats();
+        playerSeats.sort();
+
+        // find current user, counterclock
+        let opSeatId = -1;
+        let idx = playerSeats.indexOf(this.getLastOpSeatId());
+        for (let i = 0; i < playerSeats.length; i++) {
+            idx = (idx < playerSeats.length - 1) ? idx + 1 : 0;
+            let nextPlayer = this.getPlayerBySeatId(playerSeats[idx]);
+            if ((nextPlayer) && (nextPlayer.getPlayState() == RoomConst.PLAYER_STATE_PLAY)) {
+                opSeatId = nextPlayer.getSeatId();
+                break;
+            }
+        }
+
+        if (opSeatId != -1) {
+            this.setLastOpSeatId(opSeatId);
+            // GameSvs.doCastUserTurn(this.getTid(), this.getLastOpUid(), RoomConst.PLAYER_OP_SECOND);
+        } else {
+            console.log("No player turn ... no turn")
+            this.isUserTurnChecking_ = false;
+            return;
+        }
+
+        // deal cards anim time
+        this.doClearGrabTurn_();
+        this.startOpTimeTick(RoomConst.PLAYER_OP_GRAB_SECOND);
+        this.grabTurnDelayId_ = setTimeout(() => {
+            this.doClearGrabTurn_();
+            this.doUserTurnTimeout();
+        }, (RoomConst.PLAYER_OP_GRAB_SECOND) * 1000);
+
+        this.isGrabTurnChecking_ = false;
+    }
+
+    doClearGrabTurn_() {
+        clearTimeout(this.grabTurnDelayId_);
+    }
+
+    doUserTurnTimeout() {
+        this.clearOpTimeTick();
+        let opPlayer = this.getPlayerBySeatId(this.getLastOpSeatId());
+        if (this.getOpStage() == RoomConst.OP_STAGE_GRAB_DIZHU) {
+            // GameSvs.doAutoCliGrab({isGrab: 0});
         }
     }
 

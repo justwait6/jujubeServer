@@ -74,12 +74,13 @@ let CommandDef = {
 
 
   // Dizhu Client Protocol Begin
-  CLI_PLAYER_READY: 0x040C, // Dizhu请求准备
+  CLI_DIZHU_READY: 0x040C, // Dizhu请求准备
   // Dizhu Client Protocol End
   
   // Dizhu Server Protocol Begin
-  SVR_PLAYER_READY: 0x040D, // Dizhu返回用户准备
-  SVR_CAST_PLAYER_READY: 0x140D, // Dizhu广播用户准备
+  SVR_DIZHU_GAME_START: 0x14A1, // Dizhu广播游戏开始
+  SVR_DIZHU_READY: 0x040D, // Dizhu返回用户准备
+  SVR_CAST_DIZHU_READY: 0x140D, // Dizhu广播用户准备
   // Dizhu Server Protocol End
 }
 

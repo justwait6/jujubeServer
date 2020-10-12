@@ -18,7 +18,7 @@ let DizhuCmdConfig = { // Rummy Server, 只有一个协议
       {name: "tid", type: T.INT},
     ]
   },
-  [CmdDef.CLI_PLAYER_READY]: {
+  [CmdDef.CLI_DIZHU_READY]: {
     ver: 1,
     fmt: [
       {name: "uid", type: T.INT},
@@ -72,16 +72,26 @@ let DizhuCmdConfig = { // Rummy Server, 只有一个协议
       {name: "state",type: T.INT},
     ]
   },
-  [CmdDef.SVR_PLAYER_READY]: {
+  [CmdDef.SVR_DIZHU_READY]: {
     ver: 1,
     fmt: [
       {name: "ret", type: T.BYTE},
     ]
   },
-  [CmdDef.SVR_CAST_PLAYER_READY]: {
+  [CmdDef.SVR_CAST_DIZHU_READY]: {
     ver: 1,
     fmt: [
       {name: "uid", type: T.INT},
+    ]
+  },
+  [CmdDef.SVR_DIZHU_GAME_START]: {
+    ver: 1,
+    fmt: [
+      {name: "cards", type: T.ARRAY, lengthType: T.BYTE,
+        fmt: [
+          {name: "card", type: T.BYTE},
+        ]
+      },
     ]
   },
 }
