@@ -5,7 +5,7 @@ var myConf = require('../../config/MyConf');
 const RoomConst = require('../../model/rummy/RoomConst');
 const RoomUtil = require('../../model/rummy/RoomUtil');
 const SubGameDef = require('../../model/subGame/SubGameDef');
-var rummySvr = require(myConf.paths.model + '/rummy/RummySvr');
+var gameSvr = require(myConf.paths.model + '/rummy/RummySvr');
 
 const CmdDef = require(myConf.paths.common + "/protocol/CommandDef");
 const EVENT_NAMES = require(myConf.paths.common + "/event/EventNames");
@@ -14,11 +14,11 @@ const eventMgr = require(myConf.paths.common + "/event/EventMgr");
 RummySvs.start = function() {
     eventMgr.on(EVENT_NAMES.USER_LOGIN, function(data) { self.onUserLogin(data) } );
     eventMgr.on(EVENT_NAMES.RECIEVE_RUMMY_PKG, function(data) { self.onPackageReceived(data) } );
-    rummySvr.init();
+    gameSvr.init();
 }
 
 RummySvs.onUserLogin = function(uid) {
-    let table = rummySvr.queryTableByUid(uid)
+    let table = gameSvr.queryTableByUid(uid)
     if (table) {
         let player = table.getPlayerByUid(uid);
         if (player.getPlayState() == RoomConst.PLAYER_STATE_PLAY) {
@@ -55,7 +55,7 @@ RummySvs.onPackageReceived = function(parsedPkg) {
 }
 
 RummySvs.doCliGetTable = function(parsedPkg) {
-    let tableId = rummySvr.fetchOptTableId(parsedPkg.uid, parsedPkg.gameId, parsedPkg.level);
+    let tableId = gameSvr.fetchOptTableId(parsedPkg.uid, parsedPkg.gameId, parsedPkg.level);
 
     eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: parsedPkg.uid, prePkg: {
         cmd: CmdDef.SVR_GET_TABLE,
@@ -67,10 +67,10 @@ RummySvs.doCliGetTable = function(parsedPkg) {
 }
 
 RummySvs.doCliEnterRoom = function(parsedPkg) {
-    let table = rummySvr.getTable(parsedPkg.tid);
+    let table = gameSvr.getTable(parsedPkg.tid);
     let ret = table.doPlayerLogin(parsedPkg.uid, parsedPkg.userinfo);
     if (ret == 0) {
-        rummySvr.insertUidTid(parsedPkg.uid, parsedPkg.tid);
+        gameSvr.insertUidTid(parsedPkg.uid, parsedPkg.tid);
     }
 
     // 登录返回
@@ -88,7 +88,7 @@ RummySvs.doCliEnterRoom = function(parsedPkg) {
 }
 
 RummySvs.doCliExitRoom = function(parsedPkg) {
-    let table = rummySvr.getTable(parsedPkg.tid);    
+    let table = gameSvr.getTable(parsedPkg.tid);    
     let retParams = table.doPlayerExit(parsedPkg.uid, parsedPkg.userinfo);
     let tState = table.getState();
     if (tState == RoomConst.TABLE_STATE_COUNTDOWN) {
@@ -97,14 +97,14 @@ RummySvs.doCliExitRoom = function(parsedPkg) {
     self.doSendUserExit(parsedPkg.uid, retParams);
     if (retParams.ret == 0) {
         self.doCastUserExit(parsedPkg.tid, parsedPkg.uid);
-        rummySvr.deleteUidTid(parsedPkg.uid, parsedPkg.tid);
+        gameSvr.deleteUidTid(parsedPkg.uid, parsedPkg.tid);
         eventMgr.emit(EVENT_NAMES.USER_EXIT_ROOM, {uid: parsedPkg.uid});
     }
 }
 
 RummySvs.doCliDraw = function(parsedPkg) {
     console.log("RummySvs doCliDraw", parsedPkg)
-    let table = rummySvr.queryTableByUid(parsedPkg.uid);
+    let table = gameSvr.queryTableByUid(parsedPkg.uid);
     if (!table) {
         console.log("no table found!")
         return;
@@ -118,7 +118,7 @@ RummySvs.doCliDraw = function(parsedPkg) {
 }
 
 RummySvs.doCliDiscard = function(parsedPkg) {
-    let table = rummySvr.queryTableByUid(parsedPkg.uid);
+    let table = gameSvr.queryTableByUid(parsedPkg.uid);
     if (!table) {
         console.log("no table found!")
         return;
@@ -140,7 +140,7 @@ exports.doAutoDiscard = function(uid, discardCard, cliIdx) {
 }
 
 RummySvs.doCliFinish = function(parsedPkg) {
-    let table = rummySvr.queryTableByUid(parsedPkg.uid);
+    let table = gameSvr.queryTableByUid(parsedPkg.uid);
     if (!table) {
         console.log("no table found!")
         return;
@@ -154,7 +154,7 @@ RummySvs.doCliFinish = function(parsedPkg) {
 }
 
 RummySvs.doCliDeclare = function(parsedPkg) {
-    let table = rummySvr.queryTableByUid(parsedPkg.uid);
+    let table = gameSvr.queryTableByUid(parsedPkg.uid);
     if (!table) {
         console.log("no table found!")
         return;
@@ -201,7 +201,7 @@ function derefineGroups_(rfgroups) {
 }
 
 RummySvs.doCliDrop = function(parsedPkg) {
-    let table = rummySvr.queryTableByUid(parsedPkg.uid);
+    let table = gameSvr.queryTableByUid(parsedPkg.uid);
     if (!table) {
         console.log("no table found!")
         return;
@@ -220,7 +220,7 @@ exports.doAutoCliDrop = function(uid, dropType) {
 }
 
 RummySvs.doCliUploadGroups = function(parsedPkg) {
-    let table = rummySvr.queryTableByUid(parsedPkg.uid);
+    let table = gameSvr.queryTableByUid(parsedPkg.uid);
     if (!table) {
         console.log("no table found!")
         return;
@@ -239,7 +239,7 @@ RummySvs.doCliUploadGroups = function(parsedPkg) {
 }
 
 RummySvs.doCliGetDropCards = function(parsedPkg) {
-    let table = rummySvr.queryTableByUid(parsedPkg.uid);
+    let table = gameSvr.queryTableByUid(parsedPkg.uid);
     let midCards = new Array();
     table.getOldSlotCards().forEach(card => {
         midCards.push({card: card});
@@ -301,7 +301,7 @@ RummySvs.doSendEnterRoom = function(sendUid, table) {
 }
 
 RummySvs.doCastSitDown = function(tid, uid) {
-    let table = rummySvr.getTable(tid);
+    let table = gameSvr.getTable(tid);
     let player = table.getPlayerByUid(uid);
     let retPrePkg = {
         cmd: CmdDef.SVR_CAST_USER_SIT,
@@ -334,7 +334,7 @@ RummySvs.doSendUserExit = function(sendUid, retParams) {
 }
 
 RummySvs.doCastUserExit = function(tid, uid) {
-    let table = rummySvr.getTable(tid);
+    let table = gameSvr.getTable(tid);
     let players = table.getPlayers();
     let retPrePkg = {
         cmd: CmdDef.SVR_CAST_EXIT_ROOM,
@@ -356,7 +356,7 @@ exports.doSendGameStartCountDown = function(uid, time) {
 }
 
 exports.doCastGameStart = function(tid) {
-    let table = rummySvr.getTable(tid);
+    let table = gameSvr.getTable(tid);
     let retPrePkg = {cmd: CmdDef.SVR_RUMMY_GAME_START};
     retPrePkg.state = table.getState();
     retPrePkg.dUid = table.getDealerUid();
@@ -382,7 +382,7 @@ exports.doCastGameStart = function(tid) {
 }
 
 exports.doSendDealCards = function(tid, uid) {
-    let table = rummySvr.getTable(tid);
+    let table = gameSvr.getTable(tid);
     let retPrePkg = {cmd: CmdDef.SVR_RUMMY_DEAL_CARDS};
     retPrePkg.magicCard = table.getMagicCard();
     retPrePkg.dropCard = table.getFirstDropCard();
@@ -399,7 +399,7 @@ exports.doSendDealCards = function(tid, uid) {
 }
 
 exports.doCastUserTurn = function(tid, uid, time) {
-    let table = rummySvr.getTable(tid);
+    let table = gameSvr.getTable(tid);
     let retPrePkg = {cmd: CmdDef.SVR_RUMMY_USER_TURN, uid: uid, time: time}
     let players = table.getPlayers();
     players.forEach((player) => {
@@ -424,7 +424,7 @@ RummySvs.doCastDraw = function(drawCardUid, retParams) {
     retPrePkg.dropCard = retParams.dropCard;
     retPrePkg.heapCardNum = retParams.heapCardNum;
 
-    let table = rummySvr.getTable(retParams.tid);
+    let table = gameSvr.getTable(retParams.tid);
     let players = table.getPlayers();
     players.forEach((player) => {
         if (player.getUid() != drawCardUid) {
@@ -445,7 +445,7 @@ RummySvs.doSendDiscard = function(sendUid, retParams) {
 RummySvs.doCastDiscard = function(discardCardUid, retParams) {
     let retPrePkg = {cmd: CmdDef.SVR_CAST_RUMMY_DISCARD, uid: discardCardUid, dropCard: retParams.dropCard}
     
-    let table = rummySvr.getTable(retParams.tid);
+    let table = gameSvr.getTable(retParams.tid);
     let players = table.getPlayers();
     players.forEach((player) => {
         if (player.getUid() != discardCardUid) {
@@ -466,7 +466,7 @@ RummySvs.doSendFinish = function(sendUid, retParams) {
 RummySvs.doCastFinish = function(finishCardUid, retParams) {
     let retPrePkg = {cmd: CmdDef.SVR_CAST_RUMMY_FINISH, uid: finishCardUid, time: retParams.time, card: retParams.card}
     
-    let table = rummySvr.getTable(retParams.tid);
+    let table = gameSvr.getTable(retParams.tid);
     let players = table.getPlayers();
     
     players.forEach((player) => {
@@ -488,7 +488,7 @@ RummySvs.doCastDeclare = function(declareUid, retParams) {
         retPrePkg.time = retParams.time;
     }
     
-    let table = rummySvr.getTable(retParams.tid);
+    let table = gameSvr.getTable(retParams.tid);
     let players = table.getPlayers();
     
     players.forEach((player) => {
@@ -509,7 +509,7 @@ RummySvs.doSendDrop = function(sendUid, retParams) {
 RummySvs.doCastDrop = function(dropUid, retParams) {
     let retPrePkg = {cmd: CmdDef.SVR_CAST_RUMMY_DROP, uid: dropUid, money: retParams.money, minusMoney: retParams.minusMoney}
     
-    let table = rummySvr.getTable(retParams.tid);
+    let table = gameSvr.getTable(retParams.tid);
     let players = table.getPlayers();
     
     players.forEach((player) => {
@@ -520,7 +520,7 @@ RummySvs.doCastDrop = function(dropUid, retParams) {
 }
 
 exports.doCastGameOverResult = function(tid) {
-    let table = rummySvr.getTable(tid);
+    let table = gameSvr.getTable(tid);
 
     let retPrePkg = {cmd: CmdDef.SVR_RUMMY_GAME_END_SCORE}
     retPrePkg.winUid = table.getWinnerUid();

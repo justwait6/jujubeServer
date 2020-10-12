@@ -32,9 +32,9 @@ RoomConst.PLAYER_FINISH_SECOND = 25; // after player finish card, organize card 
 RoomConst.PLAYER_LEFT_DECLARE_SECOND = 25; // after first valid declaration, left players organize card need time
 
 // rummy player
-RoomConst.PLAYER_STATE_OFF = 1; // not in the play
+RoomConst.PLAYER_STATE_OFF = 0; // not in the play
+RoomConst.PLAYER_STATE_PLAY = 1; // in the play and not drop
 RoomConst.PLAYER_STATE_DROP = 2; // in the play, but dropped
-RoomConst.PLAYER_STATE_PLAY = 3; // in the play and not drop
 
 RoomConst.PLAYER_NO_DROP = 0; // no drop
 RoomConst.PLAYER_DROP_FIRST = 1; // first round drop
