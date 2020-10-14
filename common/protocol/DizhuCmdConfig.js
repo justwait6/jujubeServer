@@ -23,7 +23,14 @@ let DizhuCmdConfig = { // Rummy Server, 只有一个协议
     fmt: [
       {name: "uid", type: T.INT},
     ]
-  },  
+  },
+  [CmdDef.CLI_DIZHU_GRAB]: {
+    ver: 1,
+    fmt: [
+      {name: "uid", type: T.INT},
+      {name: "isGrab", type: T.BYTE},
+    ]
+  },
 
   
   [CmdDef.SVR_ENTER_ROOM]: {
@@ -87,6 +94,42 @@ let DizhuCmdConfig = { // Rummy Server, 只有一个协议
   [CmdDef.SVR_DIZHU_GAME_START]: {
     ver: 1,
     fmt: [
+      {name: "cards", type: T.ARRAY, lengthType: T.BYTE,
+        fmt: [
+          {name: "card", type: T.BYTE},
+        ]
+      },
+    ]
+  },
+  [CmdDef.SVR_DIZHU_GRAB_TURN]: {
+    ver: 1,
+    fmt: [
+      {name: "uid", type: T.INT},
+      {name: "odds", type: T.INT},
+      {name: "time", type: T.INT},
+    ]
+  },
+  [CmdDef.SVR_DIZHU_GRAB]: {
+    ver: 1,
+    fmt: [
+      {name: "ret", type: T.BYTE},
+      {name: "isGrab", type: T.BYTE, depends: function(ctx){ return ctx.ret == 0; } },
+      {name: "odds", type: T.INT, depends: function(ctx){ return ctx.ret == 0; } },
+    ]
+  },
+  [CmdDef.SVR_CAST_DIZHU_GRAB]: {
+    ver: 1,
+    fmt: [
+      {name: "uid", type: T.INT},
+      {name: "isGrab", type: T.BYTE},
+      {name: "odds", type: T.INT},
+    ]
+  },
+  [CmdDef.SVR_DIZHU_GRAB_RESULT]: {
+    ver: 1,
+    fmt: [
+      {name: "uid", type: T.INT},
+      {name: "odds", type: T.INT},
       {name: "cards", type: T.ARRAY, lengthType: T.BYTE,
         fmt: [
           {name: "card", type: T.BYTE},

@@ -7,6 +7,7 @@ const DizhuSvs = require("../../services/dizhu/DizhuSvs");
 
 let RoomPlayer = require("./RoomPlayer");
 const GameSvs = require("../../services/dizhu/DizhuSvs");
+const RummySvs = require("../../services/rummy/RummySvs");
 
 function getRandomInteger(min, max) {
     return Math.floor(Math.random() * (max - min + 1) ) + min;
@@ -42,6 +43,18 @@ class Table {
     }
     getSmallbet() {
         return this.smallbet_;
+    }
+    setBaseOdds(odds) {
+        this.baseOdds_ = odds;
+    }
+    getBaseOdds() {
+        return this.baseOdds_;
+    }
+    setLastCallDizhuUid(uid) {
+        this.lastCallDizhuUid_ = uid;
+    }
+    getLastCallDizhuUid(uid) {
+        return this.lastCallDizhuUid_;
     }
     setDizhuUid(uid) {
         this.dUid_ = uid;
@@ -90,7 +103,7 @@ class Table {
         let opSeatId = this.getLastOpSeatId();
         if (opSeatId >= 0) {
             let player = this.getPlayerBySeatId(opSeatId);
-            if (player && player.getPlayState() == RoomConst.PLAYER_STATE_PLAY && !player.isFinishDeclare()) {
+            if (player && player.getPlayState() == RoomConst.PLAYER_STATE_PLAY) {
                 return player.getUid();
             }
         }
@@ -220,7 +233,6 @@ class Table {
         }
 
         if (canStart) {
-            console.log("todo later, game start")
             this.doGameStart_();
         }
     }
@@ -249,11 +261,12 @@ class Table {
         // deal cards anim time
         this.dealCardsDelayId_ = setTimeout(() => {
             clearTimeout(this.dealCardsDelayId_);
-            // this.doCheckGrabTurn();
+            this.doCheckGrabTurn();
         }, (RoomConst.GAME_DEAL_CARDS_SECOND) * 1000);
     }
 
     doCheckGrabTurn() {
+        console.log("123")
         if (this.isGrabTurnChecking_) {
             return;
         }
@@ -270,15 +283,19 @@ class Table {
         for (let i = 0; i < playerSeats.length; i++) {
             idx = (idx < playerSeats.length - 1) ? idx + 1 : 0;
             let nextPlayer = this.getPlayerBySeatId(playerSeats[idx]);
-            if ((nextPlayer) && (nextPlayer.getPlayState() == RoomConst.PLAYER_STATE_PLAY)) {
+            if ((nextPlayer) && (nextPlayer.getPlayState() == RoomConst.PLAYER_STATE_PLAY)
+                && nextPlayer.isDesireGrab()) {
                 opSeatId = nextPlayer.getSeatId();
+                console.log("124", opSeatId);
                 break;
             }
         }
 
         if (opSeatId != -1) {
+            console.log("125", opSeatId);
             this.setLastOpSeatId(opSeatId);
-            // GameSvs.doCastUserTurn(this.getTid(), this.getLastOpUid(), RoomConst.PLAYER_OP_SECOND);
+            let svrGrabParams = {tid: this.getTid(), uid: this.getLastOpUid(), time: RoomConst.PLAYER_OP_GRAB_SECOND}
+            GameSvs.doCastGrabTurn(svrGrabParams);
         } else {
             console.log("No player turn ... no turn")
             this.isUserTurnChecking_ = false;
@@ -300,16 +317,72 @@ class Table {
         clearTimeout(this.grabTurnDelayId_);
     }
 
+    doPlayerGrab(uid, isGrab) {
+        let retParams = {ret: -1}
+        let player = this.getPlayerByUid(uid);
+        if (this.getLastOpSeatId() != player.getSeatId()) { // not user's turn
+            return retParams;
+        }
+        if (this.getOpStage() != RoomConst.OP_STAGE_GRAB_DIZHU) { // not in grab stage
+            retParams.ret = 2;
+            return retParams;
+        }
+        if (!player.isDesireGrab()) { // user not desire to grab already
+            retParams.ret = 3;
+            return retParams;
+        }
+        player.setDesireGrab(isGrab);
+        retParams.ret = 0;
+        if (isGrab) {
+            let oldOdds = this.getBaseOdds();
+            if (oldOdds < RoomConst.MAX_BASE_ODDS) {
+                this.setBaseOdds(++oldOdds);
+                this.setLastCallDizhuUid(uid);
+            }
+        }
+        retParams.isGrab = isGrab;
+        retParams.odds = this.getBaseOdds();
+        return retParams;
+    }
+
+    triggerCheckGrabResult() {
+        let isGrabOver = false;
+        if (this.getBaseOdds() >= RoomConst.MAX_BASE_ODDS) {
+            isGrabOver = true;
+            console.log("todo, grab over")
+        }
+
+        let desireGrabNum = 0;
+        this.getPlayers().forEach(player => {
+            if (player.isDesireGrab()) {
+                desireGrabNum++;
+            }
+        });
+        if (desireGrabNum <= 1 && this.getBaseOdds() >= 1) {
+            isGrabOver = true;
+        } else if (desireGrabNum == 0 && this.getBaseOdds() == 0) {
+            console.log("is this game over??")
+        }
+        if (isGrabOver) {
+            console.log("todo, grab over...")
+            this.setDizhuUid(this.getLastCallDizhuUid());
+            GameSvs.castDizhuGrabResult(this.getTid());
+        } else {
+            this.doCheckGrabTurn();
+        }
+    }
+
     doUserTurnTimeout() {
         this.clearOpTimeTick();
         let opPlayer = this.getPlayerBySeatId(this.getLastOpSeatId());
         if (this.getOpStage() == RoomConst.OP_STAGE_GRAB_DIZHU) {
-            // GameSvs.doAutoCliGrab({isGrab: 0});
+            GameSvs.doAutoCliGrab({uid: opPlayer.getUid(), isGrab: 0});
         }
     }
 
     resetTable_() {
         this.setLevel(1); // todo later
+        this.setBaseOdds(0);
     }
 }
 RoomTable.Table = Table;

@@ -90,12 +90,19 @@ class Player {
         }
         this.mCards_.splice(idx, 1);
     }
+    setDesireGrab(isGrab) {
+        this.isGrab_ = isGrab;
+    }
+    isDesireGrab() {
+        return this.isGrab_;
+    }
 
     reset() {
         this.setWinMoney(0);
         this.setScore(0);
         this.setGold(0); // todo later
         this.setPlayState(RoomConst.PLAYER_STATE_OFF);
+        this.setDesireGrab(true);
     }
 }
 

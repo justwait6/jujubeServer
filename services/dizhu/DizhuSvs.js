@@ -39,6 +39,8 @@ DizhuSvs.onPackageReceived = function(parsedPkg) {
         self.doCliExitRoom(parsedPkg);
     } else if (parsedPkg.cmd == CmdDef.CLI_DIZHU_READY) {
         self.doCliReady(parsedPkg);
+    } else if (parsedPkg.cmd == CmdDef.CLI_DIZHU_GRAB) {
+        self.doCliGrab(parsedPkg);
     }
 }
 
@@ -88,6 +90,20 @@ DizhuSvs.doCliReady = function(parsedPkg) {
         self.doCastReady(table.getTid(), parsedPkg.uid);
     }
     table.triggerCheckStart();
+}
+
+DizhuSvs.doCliGrab = function(parsedPkg) {
+    let table = gameSvr.queryTableByUid(parsedPkg.uid);
+    let retParams = table.doPlayerGrab(parsedPkg.uid, parsedPkg.isGrab);
+    self.doSendGrab(parsedPkg.uid, retParams);
+    if (retParams.ret == 0) {
+        self.doCastGrab(table.getTid(), parsedPkg.uid, retParams);
+    }
+    table.triggerCheckGrabResult();
+}
+
+exports.doAutoCliGrab = function(parsedPkg) {
+    DizhuSvs.doCliGrab(parsedPkg);
 }
 
 DizhuSvs.doSendEnterRoom = function(sendUid, table) {
@@ -197,6 +213,64 @@ exports.doSendGameStart = function(tid, uid) {
     });
 
     eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: player.getUid(), prePkg: retPrePkg});
+}
+
+exports.doCastGrabTurn = function(svrGrabParams) {
+    let table = gameSvr.getTable(svrGrabParams.tid);
+    let retPrePkg = {
+        cmd: CmdDef.SVR_DIZHU_GRAB_TURN,
+        uid: svrGrabParams.uid,
+        odds: table.getBaseOdds(),
+        time: svrGrabParams.time
+    }
+    table.getPlayers().forEach(player => {
+        if (player.getPlayState() == RoomConst.PLAYER_STATE_PLAY) {
+            eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: player.getUid(), prePkg: retPrePkg});
+        }
+    })
+}
+
+DizhuSvs.doSendGrab = function(sendUid, retParams) {
+    let retPrePkg = {cmd: CmdDef.SVR_DIZHU_GRAB, ret: retParams.ret};
+    if (retParams.ret == 0) {
+        retPrePkg.isGrab = retParams.isGrab;
+        retPrePkg.odds = retParams.odds;
+    }
+    eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: sendUid, prePkg: retPrePkg});  
+}
+
+
+DizhuSvs.doCastGrab = function(tid, grabUid, retParams) {
+    let table = gameSvr.getTable(tid);
+    let retPrePkg = {
+        cmd: CmdDef.SVR_CAST_DIZHU_GRAB,
+        uid: grabUid,
+        isGrab: retParams.isGrab,
+        odds: retParams.odds
+    }
+    table.getPlayers().forEach(player => {
+        if (player.getPlayState() == RoomConst.PLAYER_STATE_PLAY && player.getUid() != grabUid) {
+            eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: player.getUid(), prePkg: retPrePkg});
+        }
+    })
+}
+
+exports.castDizhuGrabResult = function(tid) {
+    let table = gameSvr.getTable(tid);
+    let retPrePkg = {
+        cmd: CmdDef.SVR_DIZHU_GRAB_RESULT,
+        uid: table.getDizhuUid(),
+        odds: table.getBaseOdds(),
+    }
+    retPrePkg.cards = new Array();
+    table.getDizhuCards().forEach((sCard) => {
+        retPrePkg.cards.push({card: sCard});
+    });
+    table.getPlayers().forEach(player => {
+        if (player.getPlayState() == RoomConst.PLAYER_STATE_PLAY) {
+            eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: player.getUid(), prePkg: retPrePkg});
+        }
+    })
 }
 
 module.exports = DizhuSvs;
