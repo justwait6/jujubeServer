@@ -109,6 +109,12 @@ class Table {
         }
         return -1;
     }
+    setNewRound(isNew) {
+        this.isNewRound_ = isNew;
+    }
+    isNewRound() {
+        return this.isNewRound_;
+    }
     getPlayers() {
         return this.players_ || [];
     }
@@ -266,7 +272,6 @@ class Table {
     }
 
     doCheckGrabTurn() {
-        console.log("123")
         if (this.isGrabTurnChecking_) {
             return;
         }
@@ -367,6 +372,7 @@ class Table {
             console.log("todo, grab over...")
             this.setDizhuUid(this.getLastCallDizhuUid());
             GameSvs.castDizhuGrabResult(this.getTid());
+            this.doCheckUserTurn(true);
         } else {
             this.doCheckGrabTurn();
         }
@@ -378,6 +384,65 @@ class Table {
         if (this.getOpStage() == RoomConst.OP_STAGE_GRAB_DIZHU) {
             GameSvs.doAutoCliGrab({uid: opPlayer.getUid(), isGrab: 0});
         }
+    }
+
+    doCheckUserTurn(isFirstTurn) {
+        if (this.isTurnChecking_) {
+            return;
+        }
+        this.isTurnChecking_ = true;
+
+        let playerSeats = this.getPlayerSeats();
+        playerSeats.sort();
+        let opSeatId = -1;
+        this.setOpStage(RoomConst.OP_STAGE_OUT_CARD);
+        if (this.isNeedNewRound_(isFirstTurn)) {
+            this.setNewRound(true);
+            this.getPlayers.forEach(player => {
+                player.setRoundPass(false);
+            });
+            opSeatId = this.getLastOpSeatId();
+        } else {
+            this.setNewRound(false);
+            let idx = playerSeats.indexOf(this.getLastOpSeatId());
+            idx = (idx < playerSeats.length - 1) ? idx + 1 : 0;
+            let nextPlayer = this.getPlayerBySeatId(playerSeats[idx]);
+            opSeatId = nextPlayer.getSeatId();
+        }
+
+        if (opSeatId != -1) {
+            this.setLastOpSeatId(opSeatId);
+            let svrTurnParams = {tid: this.getTid(), uid: this.getLastOpUid(), isNewRound: this.isNewRound(), time: RoomConst.PLAYER_OP_SECOND}
+            GameSvs.doCastTurn(svrTurnParams);
+        } else {
+            console.log("No player turn ... no turn")
+            this.isTurnChecking_ = false;
+            return;
+        }
+
+        // deal cards anim time
+        this.doClearTurn_();
+        this.startOpTimeTick(RoomConst.PLAYER_OP_SECOND);
+        this.turnDelayId_ = setTimeout(() => {
+            this.doClearTurn_();
+            this.doUserTurnTimeout();
+        }, (RoomConst.PLAYER_OP_SECOND) * 1000);
+        this.isTurnChecking_ = false;
+    }
+
+    isNeedNewRound_(isFirstTurn) {
+        if (isFirstTurn) { return true; }
+        let roundPassNum = 0;
+        this.getPlayers().forEach(player => {
+            if (player.isRoundPass()) {
+                roundPassNum++;
+            }
+        });
+        return roundPassNum >= RoomConst.MAX_TABLE_PLAYERS - 1;
+    };
+
+    doClearTurn_() {
+        clearTimeout(this.turnDelayId_);
     }
 
     resetTable_() {

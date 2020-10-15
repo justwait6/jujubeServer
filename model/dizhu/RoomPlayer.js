@@ -96,6 +96,12 @@ class Player {
     isDesireGrab() {
         return this.isGrab_;
     }
+    setRoundPass(isPass) {
+        this.isRoundPass_ = isPass;
+    }
+    isRoundPass() {
+        return this.isRoundPass_
+    }
 
     reset() {
         this.setWinMoney(0);
@@ -103,6 +109,7 @@ class Player {
         this.setGold(0); // todo later
         this.setPlayState(RoomConst.PLAYER_STATE_OFF);
         this.setDesireGrab(true);
+        this.setRoundPass(false);
     }
 }
 

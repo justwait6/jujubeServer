@@ -137,6 +137,14 @@ let DizhuCmdConfig = { // Rummy Server, 只有一个协议
       },
     ]
   },
+  [CmdDef.SVR_DIZHU_TURN]: {
+    ver: 1,
+    fmt: [
+      {name: "uid", type: T.INT},
+      {name: "isNewRound", type: T.BYTE},
+      {name: "time", type: T.INT},
+    ]
+  },
 }
 
 module.exports = DizhuCmdConfig

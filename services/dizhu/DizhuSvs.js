@@ -273,4 +273,19 @@ exports.castDizhuGrabResult = function(tid) {
     })
 }
 
+exports.doCastTurn = function(svrTurnParams) {
+    let table = gameSvr.getTable(svrTurnParams.tid);
+    let retPrePkg = {
+        cmd: CmdDef.SVR_DIZHU_TURN,
+        uid: svrTurnParams.uid,
+        isNewRound: (svrTurnParams.isNewRound) ? 1 : 0,
+        time: svrTurnParams.time
+    }
+    table.getPlayers().forEach(player => {
+        if (player.getPlayState() == RoomConst.PLAYER_STATE_PLAY) {
+            eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: player.getUid(), prePkg: retPrePkg});
+        }
+    });
+}
+
 module.exports = DizhuSvs;
