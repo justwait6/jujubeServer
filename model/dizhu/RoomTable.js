@@ -62,11 +62,23 @@ class Table {
     getDizhuUid() {
         return this.dUid_;
     }
-    setDizhuCards(cards) {
+    setBottomCards(cards) {
         this.dizhuCards_ = cards;
     }
-    getDizhuCards() {
+    getBottomCards() {
         return this.dizhuCards_;
+    }
+    setLastestOutCards(cards) {
+        this.lastestOutCards_ = cards
+    }
+    getLastestOutCards() {
+        return this.lastestOutCards_
+    }
+    setlastOutCardUid(uid) {
+        this.lastOutCardUid_ = uid;
+    }
+    getlastOutCardUid(uid) {
+        return this.lastOutCardUid_;
     }
     setLastOpSeatId(seatId) {
         this.lastOpSeatId_ = seatId;
@@ -253,6 +265,7 @@ class Table {
         this.players_.forEach((player) => {
             if (player.getPlayState() == RoomConst.PLAYER_STATE_PLAY) {
                 player.setCards(cards.splice(0, RoomConst.PLAYER_INIT_CARD_NUM));
+                player.sortCards()
             }
         });
 
@@ -262,7 +275,7 @@ class Table {
             }
         });
 
-        this.setDizhuCards(cards.splice(0, RoomConst.LEFT_DIZHU_CARD_NUM));
+        this.setBottomCards(cards.splice(0, RoomConst.LEFT_DIZHU_CARD_NUM));
 
         // deal cards anim time
         this.dealCardsDelayId_ = setTimeout(() => {
@@ -371,6 +384,9 @@ class Table {
         if (isGrabOver) {
             console.log("todo, grab over...")
             this.setDizhuUid(this.getLastCallDizhuUid());
+            let dizhuPlayer = this.getPlayerByUid(this.getDizhuUid())
+            dizhuPlayer.insertCards(this.getBottomCards())
+            dizhuPlayer.sortCards();
             GameSvs.castDizhuGrabResult(this.getTid());
             this.doCheckUserTurn(true);
         } else {
@@ -398,10 +414,14 @@ class Table {
         this.setOpStage(RoomConst.OP_STAGE_OUT_CARD);
         if (this.isNeedNewRound_(isFirstTurn)) {
             this.setNewRound(true);
-            this.getPlayers.forEach(player => {
+            this.getPlayers().forEach(player => {
                 player.setRoundPass(false);
             });
-            opSeatId = this.getLastOpSeatId();
+            if (isFirstTurn) {
+                opSeatId = this.getPlayerByUid(this.getDizhuUid()).getSeatId();
+            } else {
+                opSeatId = this.getPlayerByUid(this.getlastOutCardUid()).getSeatId();
+            }
         } else {
             this.setNewRound(false);
             let idx = playerSeats.indexOf(this.getLastOpSeatId());
@@ -443,6 +463,63 @@ class Table {
 
     doClearTurn_() {
         clearTimeout(this.turnDelayId_);
+    }
+
+    doPlayerOutCard(cliParams) {
+        let retParams = {ret: 1};
+        let player = this.getPlayerByUid(cliParams.uid);
+        if (this.getLastOpSeatId() != player.getSeatId()) { // not user's turn
+            return retParams;
+        }
+        if (this.getOpStage() != RoomConst.OP_STAGE_OUT_CARD) { // not in out card stage
+            retParams.ret = 2;
+            return retParams;
+        }
+        if (cliParams.isOut == 0) { // not out card
+            player.setRoundPass(true);
+        } else {
+            player.setRoundPass(false);
+            console.log("out card: ", cliParams.cardType, RoomUtil.getCardType(cliParams.cards))
+            if (cliParams.cardType != RoomUtil.getCardType(cliParams.cards)) {
+                retParams.ret = 3;
+                return retParams;
+            }
+            console.log("cli cards: ", cliParams.cards)
+            console.log("getLastestOutCards: ", this.getLastestOutCards() )
+            if (!this.isNewRound()) {
+                console.log("vsCards: ", RoomUtil.vsCards(cliParams.cards, this.getLastestOutCards()) )
+            }
+            let isOk = this.isNewRound() || (RoomUtil.vsCards(cliParams.cards, this.getLastestOutCards()) == 1 );
+            if (!isOk) {
+                retParams.ret = 4;
+                return retParams;
+            }
+            let ret = player.deleteCards(cliParams.cards);
+            if (ret != 0) {
+                retParams.ret = 5;
+                return retParams;
+            } else {
+                this.setLastestOutCards(cliParams.cards);
+                this.setlastOutCardUid(cliParams.uid);
+                retParams.cardType = cliParams.cardType
+                retParams.cards = cliParams.cards
+            }
+        }
+        retParams.ret = 0;
+        retParams.isOut = cliParams.isOut;
+        return retParams;
+    }
+
+    triggerCheckGameOver() {
+        let isGameOver = false
+        this.getPlayers().forEach(player => {
+            if (player.getCards().length == 0) {
+                isGameOver = true;
+            }
+        });
+        if (isGameOver) {
+            console.log("todo, game over");
+        }
     }
 
     resetTable_() {

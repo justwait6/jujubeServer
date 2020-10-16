@@ -76,6 +76,7 @@ let CommandDef = {
   // Dizhu Client Protocol Begin
   CLI_DIZHU_READY: 0x040C, // Dizhu请求准备
   CLI_DIZHU_GRAB: 0x040E, // Dizhu请求Grab
+  CLI_DIZHU_OUT_CARD: 0x0410, // Dizhu请求出牌
   // Dizhu Client Protocol End
   
   // Dizhu Server Protocol Begin
@@ -87,6 +88,8 @@ let CommandDef = {
   SVR_CAST_DIZHU_READY: 0x140D, // Dizhu广播用户准备
   SVR_DIZHU_GRAB: 0x040F, // Dizhu返回请求Grab
   SVR_CAST_DIZHU_GRAB: 0x140F, // Dizhu广播Grab
+  SVR_DIZHU_OUT_CARD: 0x0411, // Dizhu返回用户出牌
+  SVR_CAST_DIZHU_OUT_CARD: 0x1411, // Dizhu广播用户出牌
   // Dizhu Server Protocol End
 }
 

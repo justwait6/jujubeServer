@@ -31,6 +31,19 @@ let DizhuCmdConfig = { // Rummy Server, 只有一个协议
       {name: "isGrab", type: T.BYTE},
     ]
   },
+  [CmdDef.CLI_DIZHU_OUT_CARD]: {
+    ver: 1,
+    fmt: [
+      {name: "uid", type: T.INT},
+      {name: "isOut", type: T.BYTE},
+      {name: "cardType", type: T.BYTE, depends: function(ctx){ return ctx.isOut == 1; } },
+      {name: "cards", type: T.ARRAY, lengthType: T.BYTE, depends: function(ctx){ return ctx.isOut == 1; },
+        fmt: [
+          {name: "card", type: T.BYTE},
+        ]
+      },
+    ]
+  },
 
   
   [CmdDef.SVR_ENTER_ROOM]: {
@@ -143,6 +156,26 @@ let DizhuCmdConfig = { // Rummy Server, 只有一个协议
       {name: "uid", type: T.INT},
       {name: "isNewRound", type: T.BYTE},
       {name: "time", type: T.INT},
+    ]
+  },
+  [CmdDef.SVR_DIZHU_OUT_CARD]: {
+    ver: 1,
+    fmt: [
+      {name: "ret", type: T.BYTE},
+      {name: "isOut", type: T.BYTE, depends: function(ctx){ return ctx.ret == 0; } },
+    ]
+  },
+  [CmdDef.SVR_CAST_DIZHU_OUT_CARD]: {
+    ver: 1,
+    fmt: [
+      {name: "uid", type: T.INT},
+      {name: "isOut", type: T.BYTE},
+      {name: "cardType", type: T.BYTE, depends: function(ctx){ return ctx.isOut == 1; } },
+      {name: "cards", type: T.ARRAY, lengthType: T.BYTE, depends: function(ctx){ return ctx.isOut == 1; },
+        fmt: [
+          {name: "card", type: T.BYTE},
+        ]
+      },
     ]
   },
 }

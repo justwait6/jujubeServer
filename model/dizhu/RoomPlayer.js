@@ -1,4 +1,5 @@
 const RoomConst = require("./RoomConst");
+const RoomUtil = require("./RoomUtil");
 
 let RoomPlayer = {}
 class Player {
@@ -83,12 +84,46 @@ class Player {
     insertCard(card) {
         this.mCards_.push(card);
     }
+    insertCards(cards) {
+        cards.forEach(card => {
+            this.insertCard(card);
+        });
+    }
+    sortCards() {
+        this.mCards_.sort(function(a, b) { return RoomUtil.sortCard(a, b); });
+    }
     deleteCard(card) {
         let idx = this.mCards_.indexOf(card);
         if (idx == -1) {
             return -1;
         }
         this.mCards_.splice(idx, 1);
+    }
+    deleteCards(cards) {
+        cards.sort(function(a, b) { return RoomUtil.sortCard(a, b); });
+        console.log("delete cards", cards)
+        console.log("my cards", this.mCards_)
+        let moveA = cards.length - 1;
+        let moveB = this.mCards_.length - 1;
+        let backUpCards = new Array()
+        this.mCards_.forEach(card => { backUpCards.push(card) });
+        for (let i = moveA; i >= 0; i--) {
+            let toDeleteCard = cards[i];
+            let isFound = false;
+            for (let j = moveB; j >= 0; j--) {
+                if (toDeleteCard == this.mCards_[j]) {
+                    isFound = true;
+                    this.mCards_.splice(j, 1);
+                    moveB = j - 1;
+                    break;
+                }
+            }
+            if (!isFound) {
+                this.mCards_ = backUpCards;
+                return -1;
+            }
+        }
+        return 0;
     }
     setDesireGrab(isGrab) {
         this.isGrab_ = isGrab;

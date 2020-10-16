@@ -41,6 +41,8 @@ DizhuSvs.onPackageReceived = function(parsedPkg) {
         self.doCliReady(parsedPkg);
     } else if (parsedPkg.cmd == CmdDef.CLI_DIZHU_GRAB) {
         self.doCliGrab(parsedPkg);
+    } else if (parsedPkg.cmd == CmdDef.CLI_DIZHU_OUT_CARD) {
+        self.doCliOutCard(parsedPkg);
     }
 }
 
@@ -100,6 +102,37 @@ DizhuSvs.doCliGrab = function(parsedPkg) {
         self.doCastGrab(table.getTid(), parsedPkg.uid, retParams);
     }
     table.triggerCheckGrabResult();
+}
+
+
+function refineCliCards_(cards) {
+    let rfCards = new Array();
+    cards.forEach((cardTbl) => {
+        rfCards.push(cardTbl.card);
+    });
+    return rfCards;
+}
+
+function derefineCliCards_(cards) {
+    let derfCards = new Array();
+    cards.forEach((sCard) => {
+        derfCards.push({card: sCard})
+    });
+    return derfCards;
+}
+
+DizhuSvs.doCliOutCard = function(parsedPkg) {
+    let table = gameSvr.queryTableByUid(parsedPkg.uid);
+    if (parsedPkg.isOut == 1) {
+        parsedPkg.cards = refineCliCards_(parsedPkg.cards);
+    }
+    let retParams = table.doPlayerOutCard(parsedPkg);
+    self.doSendOutCards(parsedPkg.uid, retParams);
+    if (retParams.ret == 0) {
+        self.doCastOutCards(table.getTid(), parsedPkg.uid, retParams);
+    }
+    table.triggerCheckGameOver();
+    table.doCheckUserTurn(); // if discard card ok, check next operate user
 }
 
 exports.doAutoCliGrab = function(parsedPkg) {
@@ -263,7 +296,7 @@ exports.castDizhuGrabResult = function(tid) {
         odds: table.getBaseOdds(),
     }
     retPrePkg.cards = new Array();
-    table.getDizhuCards().forEach((sCard) => {
+    table.getBottomCards().forEach((sCard) => {
         retPrePkg.cards.push({card: sCard});
     });
     table.getPlayers().forEach(player => {
@@ -286,6 +319,32 @@ exports.doCastTurn = function(svrTurnParams) {
             eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: player.getUid(), prePkg: retPrePkg});
         }
     });
+}
+
+DizhuSvs.doSendOutCards = function(sendUid, retParams) {
+    let retPrePkg = {cmd: CmdDef.SVR_DIZHU_OUT_CARD, ret: retParams.ret};
+    if (retParams.ret == 0) {
+        retPrePkg.isOut = retParams.isOut;
+    }
+    eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: sendUid, prePkg: retPrePkg}); 
+}
+
+DizhuSvs.doCastOutCards = function(tid, outCardUid, retParams) {
+    let table = gameSvr.getTable(tid);
+    let retPrePkg = {
+        cmd: CmdDef.SVR_CAST_DIZHU_OUT_CARD,
+        uid: outCardUid,
+        isOut: retParams.isOut,
+    }
+    if (retParams.isOut == 1) {
+        retPrePkg.cardType = retParams.cardType;
+        retPrePkg.cards = derefineCliCards_(retParams.cards);
+    }
+    table.getPlayers().forEach(player => {
+        if (player.getPlayState() == RoomConst.PLAYER_STATE_PLAY && player.getUid() != outCardUid) {
+            eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: player.getUid(), prePkg: retPrePkg});
+        }
+    })
 }
 
 module.exports = DizhuSvs;
