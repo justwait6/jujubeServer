@@ -104,6 +104,9 @@ DizhuSvs.doCliGrab = function(parsedPkg) {
     table.triggerCheckGrabResult();
 }
 
+exports.doAutoCliGrab = function(parsedPkg) {
+    DizhuSvs.doCliGrab(parsedPkg);
+}
 
 function refineCliCards_(cards) {
     let rfCards = new Array();
@@ -135,10 +138,6 @@ DizhuSvs.doCliOutCard = function(parsedPkg) {
     table.doCheckUserTurn(); // if discard card ok, check next operate user
 }
 
-exports.doAutoCliGrab = function(parsedPkg) {
-    DizhuSvs.doCliGrab(parsedPkg);
-}
-
 DizhuSvs.doSendEnterRoom = function(sendUid, table) {
     let retPrePkg = {cmd: CmdDef.SVR_ENTER_ROOM, gameId: SubGameDef.DIZHU};
     retPrePkg.tid = table.getTid();
@@ -159,7 +158,35 @@ DizhuSvs.doSendEnterRoom = function(sendUid, table) {
     }
     retPrePkg.ret = 0;
     if (table.getState() == RoomConst.TABLE_STATE_PLAY) {
-        
+        let sendPlayer = table.getPlayerByUid(sendUid);
+        retPrePkg.dUid = table.getDizhuUid();
+        retPrePkg.cards = derefineCliCards_(sendPlayer.getCards());
+        retPrePkg.detailState = (table.getOpStage() == RoomConst.OP_STAGE_GRAB_DIZHU) ? RoomConst.T_DETAIL_STATE_GRAB : RoomConst.T_DETAIL_STATE_PLAY;
+        retPrePkg.operUid = table.getLastOpUid();
+        retPrePkg.leftOperSec = table.getLeftOpTime() - 1; // minus 1 second for better approxiamation
+        retPrePkg.odds = table.getBaseOdds();
+        if (retPrePkg.detailState == RoomConst.T_DETAIL_STATE_PLAY) {
+            retPrePkg.isNewRound = table.isNewRound() ? 1 : 0;
+            retPrePkg.bottomCards = derefineCliCards_(table.getBottomCards());
+        }
+        if (retPrePkg.detailState == RoomConst.T_DETAIL_STATE_PLAY && retPrePkg.isNewRound == 0) {
+            retPrePkg.latestOutCards = derefineCliCards_(table.getLastestOutCards());
+        }
+        retPrePkg.users = new Array();
+        table.getPlayers().forEach(player => {
+            if (player.getPlayState() == RoomConst.PLAYER_STATE_PLAY) {
+                let pp = {};
+                pp.uid = player.getUid();
+                pp.grabState = player.getGrabState();
+                pp.outCardState = player.getOutCardState();
+                pp.cardsNum = player.getCards().length;
+                pp.outCards = new Array();
+                if (pp.outCardState == RoomConst.OUT_CARD_STATE_OUT) {
+                    pp.outCards = derefineCliCards_(player.getLastOutCards());
+                }
+                retPrePkg.users.push(pp);
+            }
+        });
     }
     eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: sendUid, prePkg: retPrePkg});
 }
@@ -295,10 +322,7 @@ exports.castDizhuGrabResult = function(tid) {
         uid: table.getDizhuUid(),
         odds: table.getBaseOdds(),
     }
-    retPrePkg.cards = new Array();
-    table.getBottomCards().forEach((sCard) => {
-        retPrePkg.cards.push({card: sCard});
-    });
+    retPrePkg.cards = derefineCliCards_(table.getBottomCards());
     table.getPlayers().forEach(player => {
         if (player.getPlayState() == RoomConst.PLAYER_STATE_PLAY) {
             eventMgr.emit(EVENT_NAMES.PROCESS_OUT_PKG, {uid: player.getUid(), prePkg: retPrePkg});
@@ -311,7 +335,7 @@ exports.doCastTurn = function(svrTurnParams) {
     let retPrePkg = {
         cmd: CmdDef.SVR_DIZHU_TURN,
         uid: svrTurnParams.uid,
-        isNewRound: (svrTurnParams.isNewRound) ? 1 : 0,
+        isNewRound: table.isNewRound() ? 1 : 0,
         time: svrTurnParams.time
     }
     table.getPlayers().forEach(player => {

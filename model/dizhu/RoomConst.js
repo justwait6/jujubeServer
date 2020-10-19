@@ -16,6 +16,9 @@ RoomConst.TABLE_STATE_NOT_PLAY = 0;
 RoomConst.TABLE_STATE_PLAY = 1;
 RoomConst.TABLE_STATE_READY = 2;
 
+RoomConst.T_DETAIL_STATE_PLAY = 1;
+RoomConst.T_DETAIL_STATE_GRAB = 2;
+
 // player
 RoomConst.PLAYER_INIT_CARD_NUM = 17;
 RoomConst.LEFT_DIZHU_CARD_NUM = 3;
@@ -24,6 +27,17 @@ RoomConst.DIZHU_MAX_CARD_NUM = 20;
 RoomConst.PLAYER_STATE_OFF = 1; // not in the play
 RoomConst.PLAYER_STATE_READY = 2; // not in the play, but ready
 RoomConst.PLAYER_STATE_PLAY = 3; // in the play and not drop
+
+RoomConst.PLAYER_GRAB_NONE = 0;
+RoomConst.PLAYER_GRAB_NO_GRAB = 1;
+RoomConst.PLAYER_GRAB_NO_CALL = 2;
+RoomConst.PLAYER_GRAB_GRAB = 3;
+RoomConst.PLAYER_GRAB_CALL_GRAB = 4;
+RoomConst.PLAYER_GRAB_OVER = 5;
+
+RoomConst.OUT_CARD_STATE_NONE = 0;
+RoomConst.OUT_CARD_STATE_NO_OUT = 1;
+RoomConst.OUT_CARD_STATE_OUT = 2;
 
 // time interval
 RoomConst.GAME_DEAL_CARDS_SECOND = 3;

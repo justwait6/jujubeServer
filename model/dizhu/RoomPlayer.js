@@ -73,6 +73,22 @@ class Player {
     getPlayState() {
         return this.state_;
     }
+
+    setGrabState(state) {
+        this.grabState_ = state;
+    }
+
+    getGrabState() {
+        return this.grabState_;
+    }
+
+    setOutCardState(state) {
+        this.outCardState_ = state;
+    }
+
+    getOutCardState() {
+        return this.outCardState_;
+    }
     
     setCards(cards) {
         this.mCards_ = cards
@@ -131,11 +147,21 @@ class Player {
     isDesireGrab() {
         return this.isGrab_;
     }
-    setRoundPass(isPass) {
-        this.isRoundPass_ = isPass;
+
+    setDesireOutCard(isOut) {
+        this.isDesireOut_ = isOut;
     }
-    isRoundPass() {
-        return this.isRoundPass_
+
+    isDesireOutCard() {
+        return this.isDesireOut_;
+    }
+
+    setLastOutCards(cards) {
+        this.lastOutCards = cards;
+    }
+
+    getLastOutCards() {
+        return this.lastOutCards;
     }
 
     reset() {
@@ -144,7 +170,7 @@ class Player {
         this.setGold(0); // todo later
         this.setPlayState(RoomConst.PLAYER_STATE_OFF);
         this.setDesireGrab(true);
-        this.setRoundPass(false);
+        this.setDesireOutCard(true);
     }
 }
 

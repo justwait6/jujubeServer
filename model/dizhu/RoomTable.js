@@ -257,7 +257,11 @@ class Table {
 
     doGameStart_() {
         this.setState(RoomConst.TABLE_STATE_PLAY);
-        this.getPlayers().forEach(player => {player.setPlayState(RoomConst.PLAYER_STATE_PLAY)});
+        this.getPlayers().forEach(player => {
+            player.setPlayState(RoomConst.PLAYER_STATE_PLAY);
+            player.setGrabState(RoomConst.PLAYER_GRAB_NONE);
+            player.setOutCardState(RoomConst.OUT_CARD_STATE_NONE);
+        });
 
         let cards = RoomUtil.createInitCards();
         cards = RoomUtil.shuffleCards(cards);
@@ -304,13 +308,11 @@ class Table {
             if ((nextPlayer) && (nextPlayer.getPlayState() == RoomConst.PLAYER_STATE_PLAY)
                 && nextPlayer.isDesireGrab()) {
                 opSeatId = nextPlayer.getSeatId();
-                console.log("124", opSeatId);
                 break;
             }
         }
 
         if (opSeatId != -1) {
-            console.log("125", opSeatId);
             this.setLastOpSeatId(opSeatId);
             let svrGrabParams = {tid: this.getTid(), uid: this.getLastOpUid(), time: RoomConst.PLAYER_OP_GRAB_SECOND}
             GameSvs.doCastGrabTurn(svrGrabParams);
@@ -354,9 +356,14 @@ class Table {
         if (isGrab) {
             let oldOdds = this.getBaseOdds();
             if (oldOdds < RoomConst.MAX_BASE_ODDS) {
+                let state = (oldOdds == 0) ? RoomConst.PLAYER_GRAB_GRAB : RoomConst.PLAYER_GRAB_CALL_GRAB;
+                player.setGrabState(state);
                 this.setBaseOdds(++oldOdds);
                 this.setLastCallDizhuUid(uid);
             }
+        } else {
+            let state = (this.getBaseOdds() == 0) ? RoomConst.PLAYER_GRAB_NO_GRAB : RoomConst.PLAYER_GRAB_NO_CALL;
+            player.setGrabState(state);
         }
         retParams.isGrab = isGrab;
         retParams.odds = this.getBaseOdds();
@@ -383,6 +390,7 @@ class Table {
         }
         if (isGrabOver) {
             console.log("todo, grab over...")
+            this.doClearGrabTurn_();
             this.setDizhuUid(this.getLastCallDizhuUid());
             let dizhuPlayer = this.getPlayerByUid(this.getDizhuUid())
             dizhuPlayer.insertCards(this.getBottomCards())
@@ -415,7 +423,7 @@ class Table {
         if (this.isNeedNewRound_(isFirstTurn)) {
             this.setNewRound(true);
             this.getPlayers().forEach(player => {
-                player.setRoundPass(false);
+                player.setOutCardState(RoomConst.OUT_CARD_STATE_NONE);
             });
             if (isFirstTurn) {
                 opSeatId = this.getPlayerByUid(this.getDizhuUid()).getSeatId();
@@ -432,7 +440,7 @@ class Table {
 
         if (opSeatId != -1) {
             this.setLastOpSeatId(opSeatId);
-            let svrTurnParams = {tid: this.getTid(), uid: this.getLastOpUid(), isNewRound: this.isNewRound(), time: RoomConst.PLAYER_OP_SECOND}
+            let svrTurnParams = {tid: this.getTid(), uid: this.getLastOpUid(), time: RoomConst.PLAYER_OP_SECOND}
             GameSvs.doCastTurn(svrTurnParams);
         } else {
             console.log("No player turn ... no turn")
@@ -454,7 +462,7 @@ class Table {
         if (isFirstTurn) { return true; }
         let roundPassNum = 0;
         this.getPlayers().forEach(player => {
-            if (player.isRoundPass()) {
+            if (!player.isDesireOutCard()) {
                 roundPassNum++;
             }
         });
@@ -476,9 +484,9 @@ class Table {
             return retParams;
         }
         if (cliParams.isOut == 0) { // not out card
-            player.setRoundPass(true);
+            player.setDesireOutCard(false);
+            player.setOutCardState(RoomConst.OUT_CARD_STATE_NO_OUT);
         } else {
-            player.setRoundPass(false);
             console.log("out card: ", cliParams.cardType, RoomUtil.getCardType(cliParams.cards))
             if (cliParams.cardType != RoomUtil.getCardType(cliParams.cards)) {
                 retParams.ret = 3;
@@ -499,8 +507,13 @@ class Table {
                 retParams.ret = 5;
                 return retParams;
             } else {
+                player.setOutCardState(RoomConst.OUT_CARD_STATE_OUT);
+                player.setLastOutCards(cliParams.cards);
                 this.setLastestOutCards(cliParams.cards);
                 this.setlastOutCardUid(cliParams.uid);
+                this.getPlayers().forEach(player => {
+                    player.setDesireOutCard(true);
+                });
                 retParams.cardType = cliParams.cardType
                 retParams.cards = cliParams.cards
             }
