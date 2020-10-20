@@ -421,6 +421,7 @@ class Table {
         let opSeatId = -1;
         this.setOpStage(RoomConst.OP_STAGE_OUT_CARD);
         if (this.isNeedNewRound_(isFirstTurn)) {
+            console.log("user turn checking, need new round...")
             this.setNewRound(true);
             this.getPlayers().forEach(player => {
                 player.setOutCardState(RoomConst.OUT_CARD_STATE_NONE);
@@ -432,6 +433,7 @@ class Table {
             }
         } else {
             this.setNewRound(false);
+            console.log("user turn checking, no new round...")
             let idx = playerSeats.indexOf(this.getLastOpSeatId());
             idx = (idx < playerSeats.length - 1) ? idx + 1 : 0;
             let nextPlayer = this.getPlayerBySeatId(playerSeats[idx]);
@@ -523,7 +525,7 @@ class Table {
         return retParams;
     }
 
-    triggerCheckGameOver() {
+    checkGameOver() {
         let isGameOver = false
         this.getPlayers().forEach(player => {
             if (player.getCards().length == 0) {
@@ -533,6 +535,7 @@ class Table {
         if (isGameOver) {
             console.log("todo, game over");
         }
+        return isGameOver
     }
 
     resetTable_() {

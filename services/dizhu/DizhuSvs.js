@@ -134,8 +134,10 @@ DizhuSvs.doCliOutCard = function(parsedPkg) {
     if (retParams.ret == 0) {
         self.doCastOutCards(table.getTid(), parsedPkg.uid, retParams);
     }
-    table.triggerCheckGameOver();
-    table.doCheckUserTurn(); // if discard card ok, check next operate user
+    let isGameOVer = table.checkGameOver();
+    if (!isGameOVer) {
+        table.doCheckUserTurn(); // if discard card ok, check next operate user
+    }
 }
 
 DizhuSvs.doSendEnterRoom = function(sendUid, table) {

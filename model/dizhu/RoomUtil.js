@@ -241,9 +241,9 @@ RoomUtil.isPlaneOne = function(cards) {
         i++;
     }
 
-    if (threeCardTags.length == cards / 4) {
+    if (threeCardTags.length == cards.length / 4) {
         return canMapPlaneSeq(threeCardTags, 0, threeCardTags.length - 1);
-    } else if (threeCardTags.length > cards / 4) {
+    } else if (threeCardTags.length > cards.length / 4) {
         return canMapPlaneSeq(threeCardTags, 0, threeCardTags.length - 2) || canMapPlaneSeq(threeCardTags, 1, threeCardTags.length - 1);
     } else {
         return false;
@@ -269,9 +269,9 @@ RoomUtil.isPlaneTwo = function(cards) {
         }
     }
 
-    if (threeCardTags.length == cards / 5) {
+    if (threeCardTags.length == cards.length / 5) {
         return canMapPlaneSeq(threeCardTags, 0, threeCardTags.length - 1);
-    } else if (threeCardTags.length > cards / 5) {
+    } else if (threeCardTags.length > cards.length / 5) {
         return canMapPlaneSeq(threeCardTags, 0, threeCardTags.length - 2) || canMapPlaneSeq(threeCardTags, 1, threeCardTags.length - 1);
     } else {
         return false;
